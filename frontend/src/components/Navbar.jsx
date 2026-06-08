@@ -1,9 +1,11 @@
-import { Menu, Plus } from 'lucide-react';
+import { Download, Menu, Plus } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
+import { useInstallPrompt } from '../context/useInstallPrompt';
 import { t } from '../i18n';
 
 export default function Navbar({ title, onAddChannel, onMenuToggle }) {
   const { language } = useTheme();
+  const { isInstallable, handleInstall } = useInstallPrompt();
 
   return (
     <header className="fixed top-0 inset-x-0 h-16 bg-yt-sidebar/95 backdrop-blur-sm border-b border-yt-border z-40 flex items-center px-4 md:px-6 lg:px-8">
@@ -33,13 +35,24 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
           </>
         )}
       </div>
-      <button
-        onClick={onAddChannel}
-        className="hidden md:flex items-center gap-1.5 bg-yt-accent hover:bg-yt-accent-hover text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-medium transition flex-shrink-0"
-      >
-        <Plus size={18} />
-        <span className="hidden sm:inline">{t(language, 'addChannel')}</span>
-      </button>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {isInstallable && (
+          <button
+            onClick={handleInstall}
+            className="md:hidden flex items-center gap-1.5 border border-yt-border text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary px-2.5 py-1.5 rounded-lg text-xs font-medium transition"
+          >
+            <Download size={16} />
+            <span>{t(language, 'installApp')}</span>
+          </button>
+        )}
+        <button
+          onClick={onAddChannel}
+          className="hidden md:flex items-center gap-1.5 bg-yt-accent hover:bg-yt-accent-hover text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-medium transition flex-shrink-0"
+        >
+          <Plus size={18} />
+          <span className="hidden sm:inline">{t(language, 'addChannel')}</span>
+        </button>
+      </div>
     </header>
   );
 }

@@ -55,6 +55,7 @@ const translations = {
     favorite: 'Favorite',
     addToFavorites: 'Add to Favorites',
     channelNamePlaceholder: 'Display name (optional)',
+    installApp: 'Download App',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -112,6 +113,7 @@ const translations = {
     favorite: 'مفضلة',
     addToFavorites: 'إضافة إلى المفضلة',
     channelNamePlaceholder: 'الاسم المعروض (اختياري)',
+    installApp: 'تنزيل التطبيق',
   },
 };
 
