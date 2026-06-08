@@ -172,6 +172,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAddModal, setShowAddModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const { language } = useTheme();
 
   const handleRefreshAll = useCallback(() => {
@@ -205,6 +206,11 @@ function AppContent() {
     saveChannels(updated);
   }
 
+  function handleSelectCategory(cat) {
+    setSelectedCategory(prev => prev === cat ? null : cat);
+    if (activeTab !== 'home') setActiveTab('home');
+  }
+
   const categories = getCategories(channels);
 
   const pageTitle = () => {
@@ -220,14 +226,22 @@ function AppContent() {
 
   const pageContent = () => {
     switch (activeTab) {
-      case 'home':
+      case 'home': {
+        const filtered = selectedCategory
+          ? channels.filter(c => c.category === selectedCategory)
+          : channels;
+        const emptyMsg = selectedCategory
+          ? `${t(language, 'noChannels')} (${t(language, 'category')}: ${selectedCategory})`
+          : undefined;
         return (
           <HomePage
-            channels={channels}
+            channels={filtered}
             refreshTrigger={refreshTrigger}
             onRefreshAll={handleRefreshAll}
+            emptyMessage={emptyMsg}
           />
         );
+      }
       case 'favorites': {
         const favChannels = channels.filter(c => c.favorite);
         return (
@@ -279,6 +293,9 @@ function AppContent() {
         sidebarOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onAddChannel={() => { setShowAddModal(true); setSidebarOpen(false); }}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleSelectCategory}
       />
       <main className="md:ms-64 pt-20 px-4 md:px-8 lg:px-12 pb-8 min-h-screen">
         <div className="max-w-4xl mx-auto pt-2 md:pt-4">

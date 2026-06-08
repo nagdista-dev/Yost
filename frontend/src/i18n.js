@@ -55,6 +55,7 @@ const translations = {
     favorite: 'Favorite',
     addToFavorites: 'Add to Favorites',
     installApp: 'Download App',
+    allCategories: 'All',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -112,6 +113,7 @@ const translations = {
     favorite: 'مفضلة',
     addToFavorites: 'إضافة إلى المفضلة',
     installApp: 'تنزيل التطبيق',
+    allCategories: 'الكل',
   },
 };
 
