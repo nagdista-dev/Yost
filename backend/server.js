@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3001;
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'https://yost-hazel.vercel.app',
   'https://yost-two.vercel.app',
   process.env.CLIENT_ORIGIN,
 ].filter(Boolean);

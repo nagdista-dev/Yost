@@ -1,10 +1,10 @@
 import { useEffect, useReducer, useCallback, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
-import axios from 'axios';
 import PostCard from './PostCard';
 import LoadingSkeleton from './LoadingSkeleton';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
+import api from '../api';
 import { t } from '../i18n';
 
 const PAGE_LOAD_TIME = Date.now();
@@ -36,7 +36,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
     const url = handle.startsWith('http') ? handle : `https://www.youtube.com/@${handle.replace('@', '')}/posts`;
 
     try {
-      const { data } = await axios.get('/api/posts', { params: { channelUrl: url } });
+      const { data } = await api.get('/api/posts', { params: { channelUrl: url } });
       return { channel: handle, data, error: null };
     } catch (err) {
       const msg = err.response?.data?.error || err.message;

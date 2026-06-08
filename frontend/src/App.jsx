@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { Heart, Loader2 } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
+import api from './api';
 import Navbar from './components/Navbar';
 import ChannelSidebar from './components/ChannelSidebar';
 import HomePage from './components/HomePage';
@@ -77,7 +77,7 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
       setFetchingName(true);
       try {
         const channelUrl = `https://www.youtube.com/${handle.replace('@', '')}`;
-        const { data } = await axios.get('/api/channel-info', { params: { channelUrl } });
+        const { data } = await api.get('/api/channel-info', { params: { channelUrl } });
         if (data.name && !autoFilled.current) {
           setDisplayName(data.name);
           autoFilled.current = true;
