@@ -1,13 +1,20 @@
-import { Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function Navbar({ title, onAddChannel }) {
+export default function Navbar({ title, onAddChannel, onMenuToggle }) {
   const { language } = useTheme();
 
   return (
     <header className="fixed top-0 inset-x-0 h-16 bg-yt-sidebar/95 backdrop-blur-sm border-b border-yt-border z-40 flex items-center px-4 md:px-6 lg:px-8">
       <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-1.5 -ms-1.5 rounded-lg text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition"
+          aria-label="Toggle menu"
+        >
+          <Menu size={24} />
+        </button>
         <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
           <rect width="28" height="28" rx="6" fill="url(#navbar-logo-gradient)" />
           <path d="M8 14L12 18L20 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -28,7 +35,7 @@ export default function Navbar({ title, onAddChannel }) {
       </div>
       <button
         onClick={onAddChannel}
-        className="flex items-center gap-1.5 bg-yt-accent hover:bg-yt-accent-hover text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-medium transition flex-shrink-0"
+        className="hidden md:flex items-center gap-1.5 bg-yt-accent hover:bg-yt-accent-hover text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-medium transition flex-shrink-0"
       >
         <Plus size={18} />
         <span className="hidden sm:inline">{t(language, 'addChannel')}</span>

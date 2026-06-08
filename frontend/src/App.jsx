@@ -219,6 +219,7 @@ function AppContent() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { language } = useTheme();
 
   const handleRefreshAll = useCallback(() => {
@@ -318,9 +319,16 @@ function AppContent() {
       <Navbar
         title={pageTitle()}
         onAddChannel={() => setShowAddModal(true)}
+        onMenuToggle={() => setSidebarOpen(prev => !prev)}
       />
-      <ChannelSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="md:ms-64 pt-20 px-4 md:px-8 lg:px-12 pb-24 md:pb-8 min-h-screen">
+      <ChannelSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        sidebarOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onAddChannel={() => { setShowAddModal(true); setSidebarOpen(false); }}
+      />
+      <main className="md:ms-64 pt-20 px-4 md:px-8 lg:px-12 pb-8 min-h-screen">
         <div className="max-w-4xl mx-auto pt-2 md:pt-4">
           {pageContent()}
         </div>
