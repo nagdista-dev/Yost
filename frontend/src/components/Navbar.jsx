@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
+import { t } from '../i18n';
 
 export default function Navbar({ title, onAddChannel }) {
   const { language } = useTheme();
