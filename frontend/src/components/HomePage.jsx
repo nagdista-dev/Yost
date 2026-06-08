@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useCallback } from 'react';
+import { useEffect, useReducer, useCallback, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import PostCard from './PostCard';
@@ -6,6 +6,8 @@ import LoadingSkeleton from './LoadingSkeleton';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
+
+const PAGE_LOAD_TIME = Date.now();
 
 function feedReducer(state, action) {
   switch (action.type) {
@@ -27,11 +29,6 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
 
   function getHandle(ch) {
     return typeof ch === 'string' ? ch : ch.handle;
-  }
-
-  function getDisplayName(ch) {
-    if (typeof ch === 'string') return ch;
-    return ch.name || ch.handle;
   }
 
   const fetchChannel = useCallback(async (ch) => {
@@ -70,45 +67,48 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
     return () => { cancelled = true; };
   }, [channels, refreshTrigger, fetchChannel, language]);
 
-  function parseRelativeDate(str) {
-    if (!str) return 0;
-    const now = Date.now();
-    const lower = str.toLowerCase();
-    const match = lower.match(/(\d+)\s*(second|minute|hour|day|week|month|year)s?\s*ago/);
-    if (!match) return now;
-    const num = parseInt(match[1], 10);
-    const unit = match[2];
-    const ms = {
-      second: 1000,
-      minute: 60000,
-      hour: 3600000,
-      day: 86400000,
-      week: 604800000,
-      month: 2592000000,
-      year: 31536000000,
-    }[unit] || 0;
-    return now - num * ms;
-  }
-
-  const allPosts = [];
-  Object.entries(channelData).forEach(([channel, data]) => {
-    if (data && data.posts) {
-      data.posts.forEach(post => {
-        allPosts.push({
-          ...post,
-          _channelKey: channel,
-          _channelName: data.channelName || channel,
-          _channelAvatar: data.channelAvatar || '',
+  const allPosts = useMemo(() => {
+    const result = [];
+    Object.entries(channelData).forEach(([channel, data]) => {
+      if (data && data.posts) {
+        data.posts.forEach(post => {
+          result.push({
+            ...post,
+            _channelKey: channel,
+            _channelName: data.channelName || channel,
+            _channelAvatar: data.channelAvatar || '',
+          });
         });
-      });
-    }
-  });
+      }
+    });
 
-  allPosts.sort((a, b) => {
-    const dateA = parseRelativeDate(a.date);
-    const dateB = parseRelativeDate(b.date);
-    return dateB - dateA;
-  });
+    function parseRelativeDate(str) {
+      if (!str) return 0;
+      const lower = str.toLowerCase();
+      const match = lower.match(/(\d+)\s*(second|minute|hour|day|week|month|year)s?\s*ago/);
+      if (!match) return PAGE_LOAD_TIME;
+      const num = parseInt(match[1], 10);
+      const unit = match[2];
+      const ms = {
+        second: 1000,
+        minute: 60000,
+        hour: 3600000,
+        day: 86400000,
+        week: 604800000,
+        month: 2592000000,
+        year: 31536000000,
+      }[unit] || 0;
+      return PAGE_LOAD_TIME - num * ms;
+    }
+
+    result.sort((a, b) => {
+      const dateA = parseRelativeDate(a.date);
+      const dateB = parseRelativeDate(b.date);
+      return dateB - dateA;
+    });
+
+    return result;
+  }, [channelData]);
 
   if (channels.length === 0) {
     return (

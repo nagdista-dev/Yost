@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Toaster } from 'react-hot-toast';
-import { Heart, Star } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { Heart } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
 import Navbar from './components/Navbar';
