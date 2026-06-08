@@ -112,15 +112,12 @@ async function scrapeChannelPosts(channelUrl) {
           'img#main-image, ' +
           'ytd-image-thumbnail img, ' +
           '#image img, ' +
-          '.yt-core-image, ' +
-          'img[data-thumb], ' +
           'ytd-image-viewer img, ' +
-          '#content img[src*="yt3"], ' +
-          'img[src*="yt3.googleusercontent.com"]'
+          'img[src*="i.ytimg.com"]'
         );
         const seen = new Set();
         imageEls.forEach(img => {
-          const src = img.src || img.getAttribute('data-thumb') || img.getAttribute('data-src');
+          const src = img.src || img.getAttribute('data-src') || img.getAttribute('data-thumb');
           if (src && src.startsWith('http') && !seen.has(src)) {
             seen.add(src);
             images.push(src);
