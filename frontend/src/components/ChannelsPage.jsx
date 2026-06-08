@@ -93,37 +93,47 @@ export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavori
                     </div>
                   </div>
 
-                  {confirmDelete === ch ? (
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="text-xs text-yt-text-muted">{t(language, 'confirmDelete')}</span>
-                      <button
-                        onClick={() => handleConfirmDelete(ch)}
-                        className="text-xs px-2.5 py-1 rounded bg-yt-accent text-white font-medium hover:bg-yt-accent-hover transition"
-                      >
-                        {t(language, 'remove')}
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(null)}
-                        className="text-xs px-2.5 py-1 rounded text-yt-text-secondary hover:bg-yt-bg-tertiary transition"
-                      >
-                        {t(language, 'cancel')}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDelete(ch)}
-                      className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                      title={t(language, 'remove')}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setConfirmDelete(ch)}
+                    className="text-yt-text-muted hover:text-yt-accent p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    title={t(language, 'remove')}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
+          <div
+            className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-yt-text text-lg font-bold mb-2">{t(language, 'confirmDelete')}</h2>
+            <p className="text-yt-text-secondary text-sm mb-6">
+              {t(language, 'removeChannelConfirm', displayName(confirmDelete))}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary transition"
+              >
+                {t(language, 'cancel')}
+              </button>
+              <button
+                onClick={() => handleConfirmDelete(confirmDelete)}
+                className="bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+              >
+                {t(language, 'remove')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
