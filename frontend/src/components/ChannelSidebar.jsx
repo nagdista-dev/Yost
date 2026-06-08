@@ -2,6 +2,7 @@ import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
 const tabs = [
+  { id: 'home', icon: '🏠', labelKey: 'tabHome' },
   { id: 'channels', icon: '📺', labelKey: 'tabChannels' },
   { id: 'settings', icon: '⚙', labelKey: 'tabSettings' },
   { id: 'export', icon: '📥', labelKey: 'tabExport' },
@@ -14,7 +15,19 @@ export default function ChannelSidebar({ activeTab, setActiveTab }) {
     <>
       <aside className="hidden md:flex fixed left-0 top-0 w-64 bg-yt-sidebar h-screen flex-col border-r border-yt-border z-30">
         <div className="px-5 pt-5 pb-6">
-          <h1 className="text-yt-text text-lg font-bold tracking-tight">SocialTube</h1>
+          <div className="flex items-center gap-2">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="28" height="28" rx="6" fill="url(#yost-logo-gradient)"/>
+              <path d="M8 14L12 18L20 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="yost-logo-gradient" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#863bff"/>
+                  <stop offset="1" stopColor="#7e14ff"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <h1 className="text-yt-text text-lg font-bold tracking-tight">Yost</h1>
+          </div>
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 px-3">

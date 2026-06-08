@@ -3,7 +3,8 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
 import ChannelSidebar from './components/ChannelSidebar';
-import Feed from './components/Feed';
+import HomePage from './components/HomePage';
+import ChannelsPage from './components/ChannelsPage';
 import SettingsPage from './components/SettingsPage';
 import ExportPage from './components/ExportPage';
 import { t } from './i18n';
@@ -11,7 +12,7 @@ import { t } from './i18n';
 function AppContent() {
   const [channels, setChannels] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTab, setActiveTab] = useState('channels');
+  const [activeTab, setActiveTab] = useState('home');
   const { language } = useTheme();
 
   const handleRefreshAll = useCallback(() => {
@@ -20,7 +21,8 @@ function AppContent() {
 
   const pageTitle = () => {
     switch (activeTab) {
-      case 'channels': return t(language, 'appTitle');
+      case 'home': return t(language, 'appTitle');
+      case 'channels': return t(language, 'channels');
       case 'settings': return t(language, 'settingsTitle');
       case 'export': return t(language, 'exportTitle');
       default: return '';
@@ -29,13 +31,19 @@ function AppContent() {
 
   const pageContent = () => {
     switch (activeTab) {
-      case 'channels':
+      case 'home':
         return (
-          <Feed
+          <HomePage
             channels={channels}
-            setChannels={setChannels}
             refreshTrigger={refreshTrigger}
             onRefreshAll={handleRefreshAll}
+          />
+        );
+      case 'channels':
+        return (
+          <ChannelsPage
+            channels={channels}
+            setChannels={setChannels}
           />
         );
       case 'settings':
