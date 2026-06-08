@@ -102,8 +102,8 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
 
   if (channels.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-yt-text-muted">
-        <p className="text-lg" style={{ fontSize: 'var(--font-size-lg)' }}>{t(language, 'noChannels')}</p>
+      <div className="flex items-center justify-center min-h-[40vh] text-yt-text-muted">
+        <p className="text-lg md:text-xl" style={{ fontSize: 'var(--font-size-lg)' }}>{t(language, 'noChannels')}</p>
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
 
   if (allPosts.length === 0) {
     return (
-      <div className="text-center text-yt-text-muted py-12">
+      <div className="text-center text-yt-text-muted py-16 md:py-24">
         {Object.values(channelData).some(d => d.error) ? (
           <>
             <p className="text-lg mb-2" style={{ fontSize: 'var(--font-size-lg)' }}>{t(language, 'loadError')}</p>
@@ -126,11 +126,11 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 md:space-y-5">
       <div className="flex justify-end">
         <button
           onClick={onRefreshAll}
-          className="bg-yt-bg-tertiary hover:bg-yt-border text-yt-accent px-3 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-2"
+          className="bg-yt-bg-tertiary hover:bg-yt-border text-yt-accent px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-2"
         >
           <RefreshCw size={16} />
           {t(language, 'refreshAll')}

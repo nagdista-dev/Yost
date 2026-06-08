@@ -68,13 +68,12 @@ function AppContent() {
           },
         }}
       />
-      <Navbar />
+      <Navbar title={pageTitle()} />
       <ChannelSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="md:ms-64 pt-16 p-4 md:p-8 max-w-2xl mx-auto pb-24 md:pb-8 min-h-screen">
-        <h1 className="text-yt-text text-2xl font-bold mb-6" style={{ fontSize: 'var(--font-size-xl)' }}>
-          {pageTitle()}
-        </h1>
-        {pageContent()}
+      <main className="md:ms-64 pt-16 px-4 md:px-8 lg:px-12 pb-24 md:pb-8 min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          {pageContent()}
+        </div>
       </main>
     </div>
   );

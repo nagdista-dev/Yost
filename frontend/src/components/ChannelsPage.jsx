@@ -79,20 +79,20 @@ export default function ChannelsPage({ channels, setChannels }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-yt-bg-card rounded-xl p-4 border border-yt-border">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-yt-bg-card rounded-xl p-4 md:p-6 border border-yt-border">
+        <div className="flex items-center justify-between gap-2 mb-4 md:mb-5">
           <div className="relative flex-1">
             <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t(language, 'searchChannels')}
-              className={`w-full bg-yt-input text-yt-text rounded-lg py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'}`}
+              className={`w-full bg-yt-input text-yt-text rounded-lg py-2 md:py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'}`}
             />
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="ml-2 bg-yt-accent hover:bg-yt-accent-hover text-white p-2 rounded-lg transition flex-shrink-0"
+            className="bg-yt-accent hover:bg-yt-accent-hover text-white p-2 md:p-2.5 rounded-lg transition flex-shrink-0"
             title={t(language, 'addChannel')}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -117,16 +117,16 @@ export default function ChannelsPage({ channels, setChannels }) {
             </button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 md:gap-2.5">
             {filteredChannels.map(ch => (
-              <div key={ch} className="flex items-center gap-1.5 bg-yt-bg-tertiary rounded-full pl-2 pr-1 py-1">
-                <div className="w-5 h-5 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-[10px] flex-shrink-0 font-bold">
+              <div key={ch} className="flex items-center gap-1.5 md:gap-2 bg-yt-bg-tertiary rounded-full pl-2.5 md:pl-3 pr-1.5 md:pr-2 py-1.5 md:py-2">
+                <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-[10px] md:text-xs flex-shrink-0 font-bold">
                   {ch.replace('@', '').charAt(0).toUpperCase()}
                 </div>
-                <span className="text-yt-text text-xs truncate max-w-[100px]">{ch}</span>
+                <span className="text-yt-text text-xs md:text-sm truncate max-w-[120px] md:max-w-[180px]">{ch}</span>
                 <button
                   onClick={() => handleRemove(ch)}
-                  className="text-yt-text-muted hover:text-yt-accent text-xs p-0.5 transition"
+                  className="text-yt-text-muted hover:text-yt-accent text-xs p-0.5 md:p-1 transition"
                   title={t(language, 'remove')}
                 >
                   <X size={12} />
@@ -134,7 +134,7 @@ export default function ChannelsPage({ channels, setChannels }) {
               </div>
             ))}
             {search && filteredChannels.length === 0 && (
-              <p className="text-yt-text-muted text-xs py-1">{t(language, 'noSearchResults')}</p>
+              <p className="text-yt-text-muted text-xs md:text-sm py-2 w-full">{t(language, 'noSearchResults')}</p>
             )}
           </div>
         )}
