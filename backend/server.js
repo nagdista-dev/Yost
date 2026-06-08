@@ -121,6 +121,44 @@ async function scrapeChannelPosts(channelUrl) {
   }
 }
 
+app.get('/api/channel-info', async (req, res) => {
+  const { channelUrl } = req.query;
+
+  if (!channelUrl) {
+    return res.status(400).json({ error: 'channelUrl query parameter is required' });
+  }
+
+  try {
+    const response = await fetch(channelUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const html = await response.text();
+
+    let name = '';
+
+    const ogMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i);
+    if (ogMatch) name = ogMatch[1];
+
+    if (!name) {
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch) {
+        name = titleMatch[1].replace(/\s*-\s*YouTube$/, '').trim();
+      }
+    }
+
+    const twitterMatch = html.match(/<meta\s+name="twitter:title"\s+content="([^"]+)"/i);
+    if (!name && twitterMatch) name = twitterMatch[1];
+
+    const avatarMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+    const avatar = avatarMatch ? avatarMatch[1] : '';
+
+    res.json({ name: name || '', avatar });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch channel info', detail: err.message });
+  }
+});
+
 app.get('/api/posts', async (req, res) => {
   const { channelUrl } = req.query;
 

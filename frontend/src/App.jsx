@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { Heart } from 'lucide-react';
+import { Heart, Loader2 } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
 import Navbar from './components/Navbar';
@@ -49,31 +50,59 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [displayName, setDisplayName] = useState('');
   const [category, setCategory] = useState('');
   const [favorite, setFavorite] = useState(false);
+  const [fetchingName, setFetchingName] = useState(false);
+  const autoFilled = useRef(false);
   const { language } = useTheme();
+
+  function normalizeHandle(raw) {
+    let handle = raw.trim();
+    if (!handle) return '';
+    if (handle.includes('youtube.com') || handle.includes('youtu.be')) {
+      const match = handle.match(/@([\w-]+)/);
+      if (match) handle = `@${match[1]}`;
+      else return '';
+    }
+    if (!handle.startsWith('@')) {
+      handle = `@${handle}`;
+    }
+    return handle;
+  }
+
+  useEffect(() => {
+    if (!show) return;
+    const handle = normalizeHandle(input);
+    if (!handle) return;
+
+    const timer = setTimeout(async () => {
+      setFetchingName(true);
+      try {
+        const channelUrl = `https://www.youtube.com/${handle.replace('@', '')}`;
+        const { data } = await axios.get('/api/channel-info', { params: { channelUrl } });
+        if (data.name && !autoFilled.current) {
+          setDisplayName(data.name);
+          autoFilled.current = true;
+        }
+      } catch {
+        console.debug('channel name lookup failed');
+      } finally {
+        setFetchingName(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [input, show]);
 
   function reset() {
     setInput('');
     setDisplayName('');
     setCategory('');
     setFavorite(false);
+    autoFilled.current = false;
   }
 
   function handleAdd() {
-    let handle = input.trim();
+    const handle = normalizeHandle(input);
     if (!handle) return;
-
-    if (handle.includes('youtube.com') || handle.includes('youtu.be')) {
-      const match = handle.match(/@([\w-]+)/);
-      if (match) handle = `@${match[1]}`;
-      else {
-        toast.error(t(language, 'invalidUrl'));
-        return;
-      }
-    }
-
-    if (!handle.startsWith('@')) {
-      handle = `@${handle}`;
-    }
 
     onAdd({
       handle,
@@ -118,12 +147,17 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
             <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
               {t(language, 'channelNamePlaceholder')}
             </label>
-            <input
-              value={displayName}
-              onChange={e => setDisplayName(e.target.value)}
-              placeholder={t(language, 'channelNamePlaceholder')}
-              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
-            />
+            <div className="relative">
+              <input
+                value={displayName}
+                onChange={e => { autoFilled.current = false; setDisplayName(e.target.value); }}
+                placeholder={t(language, 'channelNamePlaceholder')}
+                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted pr-8"
+              />
+              {fetchingName && (
+                <Loader2 size={16} className="absolute top-1/2 end-3 -translate-y-1/2 text-yt-text-muted animate-spin" />
+              )}
+            </div>
           </div>
 
           <div>
