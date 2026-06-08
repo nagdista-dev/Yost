@@ -5,8 +5,29 @@ import puppeteer from 'puppeteer';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }));
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://yost-two.vercel.app',
+  process.env.CLIENT_ORIGIN,
+].filter(Boolean);
+
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Yost API',
+    version: '1.1.0',
+    status: 'ok',
+    endpoints: {
+      '/': 'GET — API info',
+      '/api/posts?channelUrl=...': 'GET — Fetch community posts for a YouTube channel (Puppeteer scrape)',
+      '/api/channel-info?channelUrl=...': 'GET — Fetch channel name & avatar via OG meta tags',
+    },
+    note: 'Puppeteer-based /api/posts requires a runtime with Chrome (not available on Vercel serverless — deploy on Railway or Render instead)',
+  });
+});
 
 const cache = new Map();
 const CACHE_TTL = 15 * 60 * 1000;
@@ -208,6 +229,10 @@ app.get('/api/posts', async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
