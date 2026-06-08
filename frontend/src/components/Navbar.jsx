@@ -12,7 +12,7 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <button
           onClick={onMenuToggle}
-          className="md:hidden p-2 -ms-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors"
+          className="md:hidden p-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors me-1"
           aria-label="Toggle menu"
         >
           <Menu size={22} />
