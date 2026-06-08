@@ -4,7 +4,7 @@
   "description": "Read YouTube community posts from your favorite channels",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f0f",
+  "background_color": "#ffffff",
   "theme_color": "#863bff",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },

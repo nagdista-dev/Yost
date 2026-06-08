@@ -4,8 +4,8 @@ import { ThemeContext } from './themeContext';
 const STORAGE_KEY = 'yt_feed_settings';
 
 const defaultSettings = {
-  theme: 'dark',
-  language: 'en',
+  theme: 'light',
+  language: 'ar',
   fontSize: 'medium',
 };
 

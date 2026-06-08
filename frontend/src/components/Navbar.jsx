@@ -18,7 +18,7 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
           <Menu size={22} />
         </button>
 
-        <span className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0">Yost</span>
+        <span className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0"><span className="brand-y" style={{ fontSize: '1.4em' }}>Y</span>ost</span>
 
         {title && (
           <>

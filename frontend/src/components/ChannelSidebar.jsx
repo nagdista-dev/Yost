@@ -55,7 +55,7 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 h-16 border-b border-yt-border shrink-0">
-              <span className="text-yt-text text-lg font-extrabold tracking-tight">Yost</span>
+              <span className="text-yt-text text-lg font-extrabold tracking-tight"><span className="brand-y" style={{ fontSize: '1.4em' }}>Y</span>ost</span>
               <button
                 onClick={onClose}
                 className="p-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors"
