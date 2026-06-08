@@ -54,7 +54,6 @@ const translations = {
     unspecified: 'Unspecified',
     favorite: 'Favorite',
     addToFavorites: 'Add to Favorites',
-    channelNamePlaceholder: 'Display name (optional)',
     installApp: 'Download App',
   },
   ar: {
@@ -112,7 +111,6 @@ const translations = {
     unspecified: 'غير محدد',
     favorite: 'مفضلة',
     addToFavorites: 'إضافة إلى المفضلة',
-    channelNamePlaceholder: 'الاسم المعروض (اختياري)',
     installApp: 'تنزيل التطبيق',
   },
 };

@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { Heart, Loader2 } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
 import api from './api';
@@ -22,7 +22,6 @@ function loadChannels() {
     if (parsed.length > 0 && typeof parsed[0] === 'string') {
       const migrated = parsed.map(handle => ({
         handle,
-        name: '',
         category: 'Unspecified',
         favorite: false,
       }));
@@ -47,11 +46,8 @@ function getCategories(channels) {
 
 function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [input, setInput] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [category, setCategory] = useState('');
   const [favorite, setFavorite] = useState(false);
-  const [fetchingName, setFetchingName] = useState(false);
-  const autoFilled = useRef(false);
   const { language } = useTheme();
 
   function normalizeHandle(raw) {
@@ -68,36 +64,10 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
     return handle;
   }
 
-  useEffect(() => {
-    if (!show) return;
-    const handle = normalizeHandle(input);
-    if (!handle) return;
-
-    const timer = setTimeout(async () => {
-      setFetchingName(true);
-      try {
-        const channelUrl = `https://www.youtube.com/${handle.replace('@', '')}`;
-        const { data } = await api.get('/api/channel-info', { params: { channelUrl } });
-        if (data.name && !autoFilled.current) {
-          setDisplayName(data.name);
-          autoFilled.current = true;
-        }
-      } catch {
-        console.debug('channel name lookup failed');
-      } finally {
-        setFetchingName(false);
-      }
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [input, show]);
-
   function reset() {
     setInput('');
-    setDisplayName('');
     setCategory('');
     setFavorite(false);
-    autoFilled.current = false;
   }
 
   function handleAdd() {
@@ -106,7 +76,6 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
 
     onAdd({
       handle,
-      name: displayName.trim(),
       category: category.trim() || 'Unspecified',
       favorite,
     });
@@ -141,23 +110,6 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
               className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
               autoFocus
             />
-          </div>
-
-          <div>
-            <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
-              {t(language, 'channelNamePlaceholder')}
-            </label>
-            <div className="relative">
-              <input
-                value={displayName}
-                onChange={e => { autoFilled.current = false; setDisplayName(e.target.value); }}
-                placeholder={t(language, 'channelNamePlaceholder')}
-                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted pr-8"
-              />
-              {fetchingName && (
-                <Loader2 size={16} className="absolute top-1/2 end-3 -translate-y-1/2 text-yt-text-muted animate-spin" />
-              )}
-            </div>
           </div>
 
           <div>

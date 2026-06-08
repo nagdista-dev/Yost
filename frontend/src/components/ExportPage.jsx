@@ -50,13 +50,10 @@ export default function ExportPage({ channels }) {
             {channels.map(ch => (
               <div key={ch.handle} className="flex items-center gap-2 bg-yt-bg-tertiary rounded-lg px-3 py-2.5">
                 <div className="w-7 h-7 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xs flex-shrink-0 font-bold">
-                  {(ch.name || ch.handle).replace('@', '').charAt(0).toUpperCase()}
+                  {ch.handle.replace('@', '').charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-yt-text text-sm truncate">{ch.name || ch.handle}</p>
-                  {ch.name && (
-                    <p className="text-yt-text-muted text-[10px] truncate">{ch.handle}</p>
-                  )}
+                  <p className="text-yt-text text-sm truncate">{ch.handle}</p>
                 </div>
                 {ch.favorite && (
                   <Heart size={12} className="text-red-500 ml-auto flex-shrink-0" fill="currentColor" />

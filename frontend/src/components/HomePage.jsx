@@ -75,7 +75,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
           result.push({
             ...post,
             _channelKey: channel,
-            _channelName: data.channelName || channel,
+            _channelName: channel,
             _channelAvatar: data.channelAvatar || '',
           });
         });

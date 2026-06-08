@@ -87,6 +87,8 @@ async function scrapeChannelPosts(channelUrl) {
       timeout: 15000,
     });
 
+    await delay(3000);
+
     const result = await page.evaluate(() => {
       const channelNameEl = document.querySelector('#owner #channel-name a, #owner .ytd-channel-name a, ytd-backstage-post-renderer #author-name a, ytd-post-renderer #author-name a');
       const channelName = channelNameEl ? channelNameEl.textContent.trim() : '';
@@ -105,11 +107,22 @@ async function scrapeChannelPosts(channelUrl) {
         const contentEl = post.querySelector('#content-text, #message');
         const text = contentEl ? contentEl.textContent.trim() : '';
 
-        const imageEls = post.querySelectorAll('img#main-image, ytd-image-thumbnail img, #image img');
         const images = [];
+        const imageEls = post.querySelectorAll(
+          'img#main-image, ' +
+          'ytd-image-thumbnail img, ' +
+          '#image img, ' +
+          '.yt-core-image, ' +
+          'img[data-thumb], ' +
+          'ytd-image-viewer img, ' +
+          '#content img[src*="yt3"], ' +
+          'img[src*="yt3.googleusercontent.com"]'
+        );
+        const seen = new Set();
         imageEls.forEach(img => {
-          const src = img.src || img.getAttribute('data-thumb') || '';
-          if (src && src.startsWith('http') && !images.includes(src)) {
+          const src = img.src || img.getAttribute('data-thumb') || img.getAttribute('data-src');
+          if (src && src.startsWith('http') && !seen.has(src)) {
+            seen.add(src);
             images.push(src);
           }
         });

@@ -13,7 +13,6 @@ export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavori
     const q = query.toLowerCase();
     return (
       ch.handle.toLowerCase().includes(q) ||
-      (ch.name && ch.name.toLowerCase().includes(q)) ||
       (ch.category && ch.category.toLowerCase().includes(q))
     );
   }
@@ -26,13 +25,8 @@ export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavori
     toast.success(t(language, 'channelRemoved', ch.handle));
   }
 
-  function displayName(ch) {
-    return ch.name || ch.handle;
-  }
-
   function avatarLetter(ch) {
-    const label = ch.name || ch.handle;
-    return label.replace('@', '').charAt(0).toUpperCase();
+    return ch.handle.replace('@', '').charAt(0).toUpperCase();
   }
 
   return (
@@ -80,10 +74,9 @@ export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavori
 
                   <div className="flex-1 min-w-0">
                     <div className="text-yt-text text-sm md:text-base truncate">
-                      {displayName(ch)}
+                      {ch.handle}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-yt-text-muted text-xs truncate">{ch.handle}</span>
                       {ch.category && ch.category !== 'Unspecified' && (
                         <>
                           <span className="text-yt-text-muted text-[10px]">·</span>
@@ -115,7 +108,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavori
           >
             <h2 className="text-yt-text text-lg font-bold mb-2">{t(language, 'confirmDelete')}</h2>
             <p className="text-yt-text-secondary text-sm mb-6">
-              {t(language, 'removeChannelConfirm', displayName(confirmDelete))}
+              {t(language, 'removeChannelConfirm', confirmDelete.handle)}
             </p>
             <div className="flex gap-2 justify-end">
               <button
