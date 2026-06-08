@@ -18,14 +18,7 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
           <Menu size={22} />
         </button>
 
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#863bff] to-[#7e14ff] flex items-center justify-center shadow-sm">
-            <svg width="18" height="18" viewBox="0 0 28 28" fill="none">
-              <path d="M8 14L12 18L20 10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <span className="text-yt-text text-lg font-extrabold tracking-tight">Yost</span>
-        </div>
+        <span className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0">Yost</span>
 
         {title && (
           <>
