@@ -18,22 +18,32 @@ function feedReducer(state, action) {
   }
 }
 
-export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
+export default function HomePage({ channels, refreshTrigger, onRefreshAll, emptyMessage }) {
   const [{ channelData, loading }, dispatch] = useReducer(feedReducer, {
     channelData: {},
     loading: channels.length > 0,
   });
   const { language } = useTheme();
 
-  const fetchChannel = useCallback(async (channel) => {
-    const url = channel.startsWith('http') ? channel : `https://www.youtube.com/@${channel.replace('@', '')}/posts`;
+  function getHandle(ch) {
+    return typeof ch === 'string' ? ch : ch.handle;
+  }
+
+  function getDisplayName(ch) {
+    if (typeof ch === 'string') return ch;
+    return ch.name || ch.handle;
+  }
+
+  const fetchChannel = useCallback(async (ch) => {
+    const handle = getHandle(ch);
+    const url = handle.startsWith('http') ? handle : `https://www.youtube.com/@${handle.replace('@', '')}/posts`;
 
     try {
       const { data } = await axios.get('/api/posts', { params: { channelUrl: url } });
-      return { channel, data, error: null };
+      return { channel: handle, data, error: null };
     } catch (err) {
       const msg = err.response?.data?.error || err.message;
-      return { channel, data: null, error: msg };
+      return { channel: handle, data: null, error: msg };
     }
   }, []);
 
@@ -103,7 +113,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
   if (channels.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[40vh] text-yt-text-muted">
-        <p className="text-lg md:text-xl" style={{ fontSize: 'var(--font-size-lg)' }}>{t(language, 'noChannels')}</p>
+        <p className="text-lg md:text-xl" style={{ fontSize: 'var(--font-size-lg)' }}>{emptyMessage || t(language, 'noChannels')}</p>
       </div>
     );
   }

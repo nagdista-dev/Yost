@@ -1,9 +1,10 @@
-import { Home, Tv, Settings, Download, Sun, Moon } from 'lucide-react';
+import { Home, Heart, Tv, Settings, Download, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
 const tabs = [
   { id: 'home', icon: Home, labelKey: 'tabHome' },
+  { id: 'favorites', icon: Heart, labelKey: 'tabFavorites' },
   { id: 'channels', icon: Tv, labelKey: 'tabChannels' },
   { id: 'settings', icon: Settings, labelKey: 'tabSettings' },
   { id: 'export', icon: Download, labelKey: 'tabExport' },

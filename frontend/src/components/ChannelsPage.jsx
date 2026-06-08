@@ -1,22 +1,38 @@
 import { useState } from 'react';
-import { Search, Trash2 } from 'lucide-react';
+import { Search, Heart, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function ChannelsPage({ channels, onRemoveChannel }) {
+export default function ChannelsPage({ channels, onRemoveChannel, onToggleFavorite }) {
   const { language } = useTheme();
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const filteredChannels = channels.filter(ch =>
-    ch.toLowerCase().includes(search.toLowerCase())
-  );
+  function matches(ch, query) {
+    const q = query.toLowerCase();
+    return (
+      ch.handle.toLowerCase().includes(q) ||
+      (ch.name && ch.name.toLowerCase().includes(q)) ||
+      (ch.category && ch.category.toLowerCase().includes(q))
+    );
+  }
+
+  const filteredChannels = channels.filter(ch => matches(ch, search));
 
   function handleConfirmDelete(ch) {
     onRemoveChannel(ch);
     setConfirmDelete(null);
-    toast.success(t(language, 'channelRemoved', ch));
+    toast.success(t(language, 'channelRemoved', ch.handle));
+  }
+
+  function displayName(ch) {
+    return ch.name || ch.handle;
+  }
+
+  function avatarLetter(ch) {
+    const label = ch.name || ch.handle;
+    return label.replace('@', '').charAt(0).toUpperCase();
   }
 
   return (
@@ -46,12 +62,37 @@ export default function ChannelsPage({ channels, onRemoveChannel }) {
         ) : (
           <div className="space-y-1">
             {filteredChannels.map(ch => (
-              <div key={ch}>
+              <div key={ch.handle}>
                 <div className="flex items-center gap-3 px-3 py-2.5 md:py-3 rounded-lg hover:bg-yt-bg-tertiary/50 transition group">
+                  <button
+                    onClick={() => onToggleFavorite(ch)}
+                    className={`p-1 rounded-lg transition flex-shrink-0 ${
+                      ch.favorite ? 'text-red-500' : 'text-transparent group-hover:text-yt-text-muted'
+                    }`}
+                    title={t(language, 'favorite')}
+                  >
+                    <Heart size={16} fill={ch.favorite ? 'currentColor' : 'none'} />
+                  </button>
+
                   <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-yt-accent/20 flex items-center justify-center text-yt-accent text-xs md:text-sm flex-shrink-0 font-bold">
-                    {ch.replace('@', '').charAt(0).toUpperCase()}
+                    {avatarLetter(ch)}
                   </div>
-                  <span className="text-yt-text text-sm md:text-base flex-1 min-w-0 truncate">{ch}</span>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-yt-text text-sm md:text-base truncate">
+                      {displayName(ch)}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-yt-text-muted text-xs truncate">{ch.handle}</span>
+                      {ch.category && ch.category !== 'Unspecified' && (
+                        <>
+                          <span className="text-yt-text-muted text-[10px]">·</span>
+                          <span className="text-yt-text-muted text-xs">{ch.category}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
                   {confirmDelete === ch ? (
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <span className="text-xs text-yt-text-muted">{t(language, 'confirmDelete')}</span>

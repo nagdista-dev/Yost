@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { Plus, X } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
 import Navbar from './components/Navbar';
@@ -16,7 +16,19 @@ const STORAGE_KEY = 'yt_feed_channels';
 function loadChannels() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (parsed.length > 0 && typeof parsed[0] === 'string') {
+      const migrated = parsed.map(handle => ({
+        handle,
+        name: '',
+        category: 'Unspecified',
+        favorite: false,
+      }));
+      saveChannels(migrated);
+      return migrated;
+    }
+    return parsed;
   } catch {
     return [];
   }
@@ -26,9 +38,25 @@ function saveChannels(channels) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(channels));
 }
 
-function AddChannelModal({ show, onClose, onAdd }) {
+function getCategories(channels) {
+  const cats = new Set();
+  channels.forEach(c => { if (c.category) cats.add(c.category); });
+  return [...cats].sort();
+}
+
+function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [input, setInput] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [category, setCategory] = useState('');
+  const [favorite, setFavorite] = useState(false);
   const { language } = useTheme();
+
+  function reset() {
+    setInput('');
+    setDisplayName('');
+    setCategory('');
+    setFavorite(false);
+  }
 
   function handleAdd() {
     let handle = input.trim();
@@ -47,8 +75,14 @@ function AddChannelModal({ show, onClose, onAdd }) {
       handle = `@${handle}`;
     }
 
-    onAdd(handle);
-    setInput('');
+    onAdd({
+      handle,
+      name: displayName.trim(),
+      category: category.trim() || 'Unspecified',
+      favorite,
+    });
+
+    reset();
   }
 
   function handleKeyDown(e) {
@@ -63,18 +97,73 @@ function AddChannelModal({ show, onClose, onAdd }) {
         className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-md mx-4 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-yt-text text-lg font-bold mb-4">{t(language, 'addChannel')}</h2>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t(language, 'addPlaceholder')}
-          className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted mb-4"
-          autoFocus
-        />
-        <div className="flex gap-2 justify-end">
+        <h2 className="text-yt-text text-lg font-bold mb-5">{t(language, 'addChannel')}</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
+              {t(language, 'addPlaceholder')}
+            </label>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t(language, 'addPlaceholder')}
+              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
+              {t(language, 'channelNamePlaceholder')}
+            </label>
+            <input
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder={t(language, 'channelNamePlaceholder')}
+              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+            />
+          </div>
+
+          <div>
+            <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
+              {t(language, 'category')}
+            </label>
+            <input
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              placeholder={t(language, 'unspecified')}
+              list="category-suggestions"
+              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+            />
+            <datalist id="category-suggestions">
+              <option value={t(language, 'unspecified')} />
+              {categories.filter(c => c !== 'Unspecified').map(c => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <button
+              type="button"
+              onClick={() => setFavorite(!favorite)}
+              className={`p-1.5 rounded-lg transition ${
+                favorite
+                  ? 'text-red-500'
+                  : 'text-yt-text-muted group-hover:text-yt-text-secondary'
+              }`}
+            >
+              <Heart size={20} fill={favorite ? 'currentColor' : 'none'} />
+            </button>
+            <span className="text-yt-text text-sm font-medium">{t(language, 'addToFavorites')}</span>
+          </label>
+        </div>
+
+        <div className="flex gap-2 justify-end mt-6">
           <button
-            onClick={onClose}
+            onClick={() => { reset(); onClose(); }}
             className="px-4 py-2 rounded-lg text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary transition"
           >
             {t(language, 'cancel')}
@@ -102,17 +191,17 @@ function AppContent() {
     setRefreshTrigger(t => t + 1);
   }, []);
 
-  function handleAddChannel(handle) {
-    const existing = channels.find(c => c.toLowerCase() === handle.toLowerCase());
+  function handleAddChannel(channelObj) {
+    const existing = channels.find(c => c.handle.toLowerCase() === channelObj.handle.toLowerCase());
     if (existing) {
       toast.error(t(language, 'channelExists'));
       return;
     }
-    const updated = [...channels, handle];
+    const updated = [...channels, channelObj];
     setChannels(updated);
     saveChannels(updated);
     setShowAddModal(false);
-    toast.success(t(language, 'channelAdded', handle));
+    toast.success(t(language, 'channelAdded', channelObj.handle));
   }
 
   function handleRemoveChannel(channel) {
@@ -121,9 +210,20 @@ function AppContent() {
     saveChannels(updated);
   }
 
+  function handleToggleFavorite(channel) {
+    const updated = channels.map(c =>
+      c === channel ? { ...c, favorite: !c.favorite } : c
+    );
+    setChannels(updated);
+    saveChannels(updated);
+  }
+
+  const categories = getCategories(channels);
+
   const pageTitle = () => {
     switch (activeTab) {
       case 'home': return t(language, 'appTitle');
+      case 'favorites': return t(language, 'favoritesTitle');
       case 'channels': return t(language, 'channels');
       case 'settings': return t(language, 'settingsTitle');
       case 'export': return t(language, 'exportTitle');
@@ -141,11 +241,23 @@ function AppContent() {
             onRefreshAll={handleRefreshAll}
           />
         );
+      case 'favorites': {
+        const favChannels = channels.filter(c => c.favorite);
+        return (
+          <HomePage
+            channels={favChannels}
+            refreshTrigger={refreshTrigger}
+            onRefreshAll={handleRefreshAll}
+            emptyMessage={t(language, 'noFavorites')}
+          />
+        );
+      }
       case 'channels':
         return (
           <ChannelsPage
             channels={channels}
             onRemoveChannel={handleRemoveChannel}
+            onToggleFavorite={handleToggleFavorite}
           />
         );
       case 'settings':
@@ -183,6 +295,7 @@ function AppContent() {
         show={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddChannel}
+        categories={categories}
       />
     </div>
   );
