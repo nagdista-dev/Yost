@@ -34,15 +34,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Puppeteer / Chromium
-.puppeteerrc.cjs
-chrome-linux/
-chrome-win/
-chrome-mac/
-
-# Backend
-backend/node_modules
-
 # Frontend
 frontend/node_modules
 frontend/dist

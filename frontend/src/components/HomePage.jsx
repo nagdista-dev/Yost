@@ -33,10 +33,9 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
 
   const fetchChannel = useCallback(async (ch) => {
     const handle = getHandle(ch);
-    const url = handle.startsWith('http') ? handle : `https://www.youtube.com/@${handle.replace('@', '')}/posts`;
 
     try {
-      const { data } = await api.get('/api/posts', { params: { channelUrl: url } });
+      const { data } = await api.get('/api/posts', { params: { channelHandle: handle } });
       return { channel: handle, data, error: null };
     } catch (err) {
       const msg = err.response?.data?.error || err.message;
