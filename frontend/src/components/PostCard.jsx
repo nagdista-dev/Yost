@@ -1,17 +1,13 @@
 import { useState } from 'react';
+import { ThumbsUp, ExternalLink } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
-
-function isArabic(text) {
-  return /[\u0600-\u06FF]/.test(text);
-}
 
 export default function PostCard({ post, channelName, channelAvatar }) {
   const [expanded, setExpanded] = useState(false);
   const [lightbox, setLightbox] = useState(null);
   const { language } = useTheme();
   const isLongText = post.text.length > 150;
-  const arabic = isArabic(post.text);
 
   return (
     <>
@@ -36,7 +32,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
 
         <div className="mb-3">
           <p
-            className={`text-yt-text text-sm leading-relaxed whitespace-pre-wrap ${arabic ? 'font-arabic font-tajawal' : ''} ${!expanded && isLongText ? 'line-clamp-3' : ''}`}
+            className={`text-yt-text text-sm leading-relaxed whitespace-pre-wrap ${!expanded && isLongText ? 'line-clamp-3' : ''}`}
             style={{ fontSize: 'var(--font-size-base)' }}
           >
             {post.text}
@@ -68,7 +64,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
 
         <div className="flex items-center gap-4 pt-2 border-t border-yt-border">
           <span className="text-yt-text-secondary text-sm flex items-center gap-1">
-            <span>👍</span> {post.likes}
+            <ThumbsUp size={14} /> {post.likes}
           </span>
           {post.postUrl && (
             <a
@@ -77,7 +73,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
               rel="noopener noreferrer"
               className="text-yt-accent text-sm hover:opacity-80 transition flex items-center gap-1"
             >
-              <span>🔗</span> {t(language, 'openOnYouTube')}
+              <ExternalLink size={14} /> {t(language, 'openOnYouTube')}
             </a>
           )}
         </div>

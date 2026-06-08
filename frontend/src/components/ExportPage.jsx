@@ -1,3 +1,4 @@
+import { Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
@@ -36,7 +37,7 @@ export default function ExportPage({ channels }) {
         onClick={handleExport}
         className="bg-yt-accent hover:bg-yt-accent-hover text-white px-6 py-3 rounded-lg text-base font-medium transition inline-flex items-center gap-2"
       >
-        <span>📥</span>
+        <Download size={18} />
         {t(language, 'exportBtn')}
       </button>
 

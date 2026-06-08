@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
@@ -81,7 +82,7 @@ export default function ChannelsPage({ channels, setChannels }) {
       <div className="bg-yt-bg-card rounded-xl p-4 border border-yt-border">
         <div className="flex items-center justify-between mb-3">
           <div className="relative flex-1">
-            <span className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted text-sm`}>🔍</span>
+            <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -128,7 +129,7 @@ export default function ChannelsPage({ channels, setChannels }) {
                   className="text-yt-text-muted hover:text-yt-accent text-xs p-0.5 transition"
                   title={t(language, 'remove')}
                 >
-                  ✕
+                  <X size={12} />
                 </button>
               </div>
             ))}

@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import PostCard from './PostCard';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -112,8 +113,9 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll }) {
       <div className="flex justify-end">
         <button
           onClick={onRefreshAll}
-          className="bg-yt-bg-tertiary hover:bg-yt-border text-yt-accent px-3 py-2 rounded-lg text-sm font-medium transition"
+          className="bg-yt-bg-tertiary hover:bg-yt-border text-yt-accent px-3 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-2"
         >
+          <RefreshCw size={16} />
           {t(language, 'refreshAll')}
         </button>
       </div>

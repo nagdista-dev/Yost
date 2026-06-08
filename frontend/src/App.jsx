@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
+import Navbar from './components/Navbar';
 import ChannelSidebar from './components/ChannelSidebar';
 import HomePage from './components/HomePage';
 import ChannelsPage from './components/ChannelsPage';
@@ -67,8 +68,9 @@ function AppContent() {
           },
         }}
       />
+      <Navbar />
       <ChannelSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="md:ml-64 p-4 md:p-8 max-w-2xl mx-auto pb-24 md:pb-8 min-h-screen">
+      <main className="md:ms-64 pt-16 p-4 md:p-8 max-w-2xl mx-auto pb-24 md:pb-8 min-h-screen">
         <h1 className="text-yt-text text-2xl font-bold mb-6" style={{ fontSize: 'var(--font-size-xl)' }}>
           {pageTitle()}
         </h1>

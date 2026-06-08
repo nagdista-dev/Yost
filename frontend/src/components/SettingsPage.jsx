@@ -1,3 +1,4 @@
+import { Moon, Sun, Languages } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -20,13 +21,13 @@ export default function SettingsPage() {
               <button
                 key={mode}
                 onClick={() => updateSetting('theme', mode)}
-                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
                   theme === mode
                     ? 'bg-yt-accent text-white ring-2 ring-yt-accent/50'
                     : 'bg-yt-bg-tertiary text-yt-text-secondary hover:text-yt-text'
                 }`}
               >
-                <span>{mode === 'dark' ? '🌙' : '☀️'}</span>
+                {mode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
                 {t(language, mode)}
               </button>
             ))}
@@ -42,13 +43,13 @@ export default function SettingsPage() {
               <button
                 key={lang}
                 onClick={() => updateSetting('language', lang)}
-                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
                   language === lang
                     ? 'bg-yt-accent text-white ring-2 ring-yt-accent/50'
                     : 'bg-yt-bg-tertiary text-yt-text-secondary hover:text-yt-text'
                 }`}
               >
-                <span>{lang === 'ar' ? '🇸🇦' : '🇺🇸'}</span>
+                <Languages size={18} />
                 {t(language, lang === 'ar' ? 'arabic' : 'english')}
               </button>
             ))}

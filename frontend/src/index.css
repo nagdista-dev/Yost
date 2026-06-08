@@ -73,15 +73,8 @@
 }
 
 body {
+  font-family: "Tajawal", "Inter", sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-size: var(--font-size-base);
-}
-
-.font-arabic {
-  font-family: "Tajawal", sans-serif !important;
-}
-
-body {
-  font-family: "Inter", sans-serif;
 }
