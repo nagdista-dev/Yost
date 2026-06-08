@@ -9,7 +9,7 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
 
   return (
     <header className="fixed top-0 inset-x-0 h-16 bg-yt-sidebar/85 backdrop-blur-lg border-b border-yt-border z-40 flex items-center px-4 md:px-6">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex items-center gap-3 min-w-0 flex-1 max-md:justify-between">
         <button
           onClick={onMenuToggle}
           className="md:hidden p-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors me-1"
