@@ -1,0 +1,87 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-yt-bg: var(--bg-primary);
+  --color-yt-bg-secondary: var(--bg-secondary);
+  --color-yt-bg-tertiary: var(--bg-tertiary);
+  --color-yt-bg-card: var(--bg-card);
+  --color-yt-text: var(--text-primary);
+  --color-yt-text-secondary: var(--text-secondary);
+  --color-yt-text-muted: var(--text-muted);
+  --color-yt-accent: var(--accent);
+  --color-yt-accent-hover: var(--accent-hover);
+  --color-yt-border: var(--border);
+  --color-yt-sidebar: var(--sidebar-bg);
+  --color-yt-input: var(--input-bg);
+  --font-tajawal: "Tajawal", sans-serif;
+}
+
+:root,
+[data-theme="dark"] {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #272727;
+  --bg-card: #1a1a1a;
+  --text-primary: #f1f1f1;
+  --text-secondary: #aaaaaa;
+  --text-muted: #717171;
+  --accent: #ff0000;
+  --accent-hover: #cc0000;
+  --border: #333333;
+  --sidebar-bg: #1a1a1a;
+  --input-bg: #272727;
+}
+
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --bg-tertiary: #f0f0f0;
+  --bg-card: #ffffff;
+  --text-primary: #0f0f0f;
+  --text-secondary: #606060;
+  --text-muted: #909090;
+  --accent: #ff0000;
+  --accent-hover: #cc0000;
+  --border: #e0e0e0;
+  --sidebar-bg: #f9f9f9;
+  --input-bg: #f0f0f0;
+}
+
+[data-font-size="small"] {
+  --font-size-base: 0.875rem;
+  --font-size-sm: 0.75rem;
+  --font-size-xs: 0.625rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.25rem;
+}
+
+[data-font-size="medium"] {
+  --font-size-base: 1rem;
+  --font-size-sm: 0.875rem;
+  --font-size-xs: 0.75rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+}
+
+[data-font-size="large"] {
+  --font-size-base: 1.125rem;
+  --font-size-sm: 1rem;
+  --font-size-xs: 0.875rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+.font-arabic {
+  font-family: "Tajawal", sans-serif !important;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
