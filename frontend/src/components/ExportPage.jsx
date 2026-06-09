@@ -1,10 +1,33 @@
-import { Download, Heart } from 'lucide-react';
+import { useRef } from 'react';
+import { Download, Upload, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function ExportPage({ channels }) {
+export default function ExportPage({ channels, onImport }) {
   const { language } = useTheme();
+  const fileInputRef = useRef(null);
+
+  function handleImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('Not an array');
+        data.forEach(ch => {
+          if (!ch.handle) throw new Error('Missing handle');
+        });
+        onImport(data);
+        toast.success(t(language, 'importSuccess', data.length));
+      } catch {
+        toast.error(t(language, 'importError'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
 
   function handleExport() {
     if (channels.length === 0) {
@@ -33,13 +56,32 @@ export default function ExportPage({ channels }) {
         {t(language, 'exportDesc')}
       </p>
 
-      <button
-        onClick={handleExport}
-        className="bg-yt-accent hover:bg-yt-accent-hover text-white px-6 md:px-8 py-3 md:py-3.5 rounded-lg text-base font-medium transition inline-flex items-center gap-2"
-      >
-        <Download size={20} />
-        {t(language, 'exportBtn')}
-      </button>
+      <div className="flex flex-wrap gap-4">
+        <button
+          onClick={handleExport}
+          className="bg-yt-accent hover:bg-yt-accent-hover text-white px-6 md:px-8 py-3 md:py-3.5 rounded-lg text-base font-medium transition inline-flex items-center gap-2"
+        >
+          <Download size={20} />
+          {t(language, 'exportBtn')}
+        </button>
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="bg-yt-bg-tertiary hover:bg-yt-border text-yt-text px-6 md:px-8 py-3 md:py-3.5 rounded-lg text-base font-medium transition inline-flex items-center gap-2"
+        >
+          <Upload size={20} />
+          {t(language, 'importBtn')}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={handleImport}
+          className="hidden"
+        />
+      </div>
+
+      <p className="text-yt-text-muted text-sm mt-3">{t(language, 'importDesc')}</p>
 
       {channels.length > 0 && (
         <div className="mt-8 md:mt-10">

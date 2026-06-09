@@ -3,7 +3,15 @@ import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
 export default function SettingsPage() {
-  const { theme, language, fontSize, updateSetting } = useTheme();
+  const {
+    theme, language, fontSize,
+    showThemeQuickAccess, showLangQuickAccess, showFontSizeQuickAccess, showFullscreenQuickAccess,
+    updateSetting
+  } = useTheme();
+
+  const toggleSetting = (key, value) => {
+    updateSetting(key, !value);
+  };
 
   return (
     <div className="bg-yt-bg-card rounded-xl p-6 md:p-8 lg:p-10 border border-yt-border">
@@ -73,6 +81,36 @@ export default function SettingsPage() {
               >
                 {t(language, size)}
               </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-yt-text-secondary text-xs font-semibold mb-3 uppercase tracking-wide">
+            {t(language, 'sidebarQuickAccess')}
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              { key: 'showThemeQuickAccess', label: 'showThemeIcon', value: showThemeQuickAccess },
+              { key: 'showLangQuickAccess', label: 'showLangIcon', value: showLangQuickAccess },
+              { key: 'showFontSizeQuickAccess', label: 'showFontSizeIcon', value: showFontSizeQuickAccess },
+              { key: 'showFullscreenQuickAccess', label: 'showFullscreenIcon', value: showFullscreenQuickAccess },
+            ].map(item => (
+              <label key={item.key} className="flex items-center justify-between cursor-pointer group">
+                <span className="text-yt-text-secondary group-hover:text-yt-text transition-colors text-sm font-medium">
+                  {t(language, item.label)}
+                </span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={item.value}
+                    onChange={() => toggleSetting(item.key, item.value)}
+                  />
+                  <div className={`block w-10 h-6 rounded-full transition-colors ${item.value ? 'bg-yt-accent' : 'bg-yt-bg-tertiary border border-yt-border'}`}></div>
+                  <div className={`absolute start-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${item.value ? 'translate-x-4 rtl:-translate-x-4' : ''}`}></div>
+                </div>
+              </label>
             ))}
           </div>
         </div>

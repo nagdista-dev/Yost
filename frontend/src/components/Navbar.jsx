@@ -3,7 +3,7 @@ import { useTheme } from '../context/useTheme';
 import { useInstallPrompt } from '../context/useInstallPrompt';
 import { t } from '../i18n';
 
-export default function Navbar({ title, onAddChannel, onMenuToggle }) {
+export default function Navbar({ title, onAddChannel, onMenuToggle, onGoHome }) {
   const { language } = useTheme();
   const { isInstallable, handleInstall } = useInstallPrompt();
 
@@ -18,7 +18,12 @@ export default function Navbar({ title, onAddChannel, onMenuToggle }) {
           <Menu size={22} />
         </button>
 
-        <span className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0"><span className="brand-y" style={{ fontSize: '1.4em' }}>Y</span>ost</span>
+        <span 
+          onClick={onGoHome}
+          className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0 cursor-pointer hover:opacity-80 transition"
+        >
+          <span className="brand-y" style={{ fontSize: '1.4em' }}>Y</span>ost
+        </span>
 
         {title && (
           <>

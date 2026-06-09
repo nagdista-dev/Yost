@@ -37,3 +37,8 @@ Desktop.ini
 # Frontend
 frontend/node_modules
 frontend/dist
+
+# Backend
+backend/node_modules
+backend/cache.json
+backend/error-screenshot.png

@@ -1,4 +1,5 @@
-import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -10,11 +11,43 @@ const tabs = [
   { id: 'export', icon: Download, labelKey: 'tabExport' },
 ];
 
+const FONT_SIZES = ['small', 'medium', 'large'];
+
+function useFullscreen() {
+  const [isFs, setIsFs] = useState(!!document.fullscreenElement);
+
+  useEffect(() => {
+    const handler = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  }, []);
+
+  return { isFs, toggle };
+}
+
 export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, onClose, onAddChannel, categories, selectedCategory, onSelectCategory }) {
-  const { theme, language, updateSetting } = useTheme();
+  const {
+    theme, language, fontSize, updateSetting,
+    showThemeQuickAccess, showLangQuickAccess, showFontSizeQuickAccess, showFullscreenQuickAccess
+  } = useTheme();
+  const { isFs, toggle: toggleFs } = useFullscreen();
 
   const validCategories = categories.filter(c => c !== 'Unspecified');
 
+  const nextFontSize = () => {
+    const idx = FONT_SIZES.indexOf(fontSize);
+    return FONT_SIZES[(idx + 1) % FONT_SIZES.length];
+  };
+
+  // ── Shared sub-components ─────────────────────────────────────────────────
   function TabButton({ tab, onClick }) {
     const Icon = tab.icon;
     return (
@@ -74,6 +107,80 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
     );
   }
 
+  // Quick-access icon button (used at the bottom of the sidebar)
+  function QuickButton({ icon: Icon, label, onClick, active }) {
+    return (
+      <button
+        onClick={onClick}
+        title={label}
+        className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
+          active
+            ? 'bg-yt-accent/15 text-yt-accent'
+            : 'text-yt-text-muted hover:bg-yt-bg-tertiary hover:text-yt-text'
+        }`}
+      >
+        <Icon size={18} />
+      </button>
+    );
+  }
+
+  // The shared footer with Add + quick-access buttons
+  function SidebarFooter({ onAdd, closeMobile }) {
+    return (
+      <div className="shrink-0 border-t border-yt-border">
+        {/* Add Channel button */}
+        <div className="px-3 pt-3 pb-2">
+          <button
+            onClick={() => { onAdd(); if (closeMobile) closeMobile(); }}
+            className="w-full flex items-center justify-center gap-2 bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+            <span>{t(language, 'addChannel')}</span>
+          </button>
+        </div>
+
+        {/* Quick-access row */}
+        <div className="flex items-center justify-center gap-1 px-3 pb-3 pt-1">
+          {/* Theme toggle */}
+          {showThemeQuickAccess && (
+            <QuickButton
+              icon={theme === 'dark' ? Sun : Moon}
+              label={theme === 'dark' ? t(language, 'light') : t(language, 'dark')}
+              onClick={() => updateSetting('theme', theme === 'dark' ? 'light' : 'dark')}
+            />
+          )}
+          {/* Language toggle */}
+          {showLangQuickAccess && (
+            <QuickButton
+              icon={Languages}
+              label={language === 'ar' ? t(language, 'english') : t(language, 'arabic')}
+              onClick={() => updateSetting('language', language === 'ar' ? 'en' : 'ar')}
+            />
+          )}
+          {/* Font size cycle */}
+          {showFontSizeQuickAccess && (
+            <QuickButton
+              icon={Type}
+              label={`${t(language, 'fontSize')}: ${t(language, nextFontSize())}`}
+              onClick={() => updateSetting('fontSize', nextFontSize())}
+              active={fontSize !== 'medium'}
+            />
+          )}
+          {/* Fullscreen toggle */}
+          {showFullscreenQuickAccess && (
+            <QuickButton
+              icon={isFs ? Minimize : Maximize}
+              label={isFs ? 'Exit Fullscreen' : 'Fullscreen'}
+              onClick={toggleFs}
+              active={isFs}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Desktop sidebar ───────────────────────────────────────────────────────
   return (
     <>
       <aside className="hidden md:flex fixed start-0 top-16 w-64 bg-yt-sidebar bottom-0 flex-col border-e border-yt-border z-30">
@@ -87,17 +194,10 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
           <CategorySection />
         </nav>
 
-        <div className="px-3 pb-4 shrink-0 border-t border-yt-border pt-3">
-          <button
-            onClick={() => updateSetting('theme', theme === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary hover:text-yt-text transition"
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{theme === 'dark' ? t(language, 'light') : t(language, 'dark')}</span>
-          </button>
-        </div>
+        <SidebarFooter onAdd={onAddChannel} />
       </aside>
 
+      {/* ── Mobile sidebar (drawer) ──────────────────────────────────────── */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50" onClick={onClose}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -116,17 +216,7 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
               </button>
             </div>
 
-            <div className="px-3 pt-3 pb-2 shrink-0">
-              <button
-                onClick={onAddChannel}
-                className="w-full flex items-center justify-center gap-2 bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
-              >
-                <Plus size={18} />
-                <span>{t(language, 'addChannel')}</span>
-              </button>
-            </div>
-
-            <nav className="flex-1 flex flex-col gap-0.5 px-2 pb-2 overflow-y-auto">
+            <nav className="flex-1 flex flex-col gap-0.5 px-2 pb-2 pt-3 overflow-y-auto">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
@@ -147,15 +237,7 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
               <CategorySection />
             </nav>
 
-            <div className="border-t border-yt-border px-2 py-2 shrink-0">
-              <button
-                onClick={() => updateSetting('theme', theme === 'dark' ? 'light' : 'dark')}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary hover:text-yt-text transition-colors"
-              >
-                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                <span>{theme === 'dark' ? t(language, 'light') : t(language, 'dark')}</span>
-              </button>
-            </div>
+            <SidebarFooter onAdd={onAddChannel} closeMobile={onClose} />
           </aside>
         </div>
       )}

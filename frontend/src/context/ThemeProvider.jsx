@@ -7,6 +7,10 @@ const defaultSettings = {
   theme: 'light',
   language: 'ar',
   fontSize: 'medium',
+  showThemeQuickAccess: true,
+  showLangQuickAccess: true,
+  showFontSizeQuickAccess: true,
+  showFullscreenQuickAccess: true,
 };
 
 function loadSettings() {

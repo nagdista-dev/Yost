@@ -46,6 +46,7 @@ function getCategories(channels) {
 
 function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [input, setInput] = useState('');
+  const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [favorite, setFavorite] = useState(false);
   const { language } = useTheme();
@@ -54,7 +55,7 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
     let handle = raw.trim();
     if (!handle) return '';
     if (handle.includes('youtube.com') || handle.includes('youtu.be')) {
-      const match = handle.match(/@([\w-]+)/);
+      const match = handle.match(/@([\w.-]+)/);
       if (match) handle = `@${match[1]}`;
       else return '';
     }
@@ -66,6 +67,7 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
 
   function reset() {
     setInput('');
+    setName('');
     setCategory('');
     setFavorite(false);
   }
@@ -76,6 +78,7 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
 
     onAdd({
       handle,
+      name: name.trim(),
       category: category.trim() || 'Unspecified',
       favorite,
     });
@@ -104,11 +107,45 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
             </label>
             <input
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setInput(val);
+                // Auto‑generate name from entered handle or URL
+                let nameVal = val.trim();
+                if (nameVal.includes('youtube.com') || nameVal.includes('youtu.be')) {
+                  const match = nameVal.match(/@([\w.-]+)/);
+                  if (match) nameVal = match[1];
+                }
+                nameVal = nameVal.replace(/^@/, '');
+                // Replace underscores, hyphens, hash, and similar symbols with a comma+space (keep dots)
+                nameVal = nameVal.replace(/[_#\-:/\\]+/g, ', ');
+                // Insert a space after a dot followed by a letter (e.g. "Dr.Haitham" → "Dr. Haitham")
+                nameVal = nameVal.replace(/\.(?=[A-Za-z])/g, '. ');
+                // Insert space before capital letters (camelCase)
+                nameVal = nameVal.replace(/([A-Z])/g, ' $1').trim();
+                // Capitalize first letter of the entire string
+                let formatted = nameVal.charAt(0).toUpperCase() + nameVal.slice(1);
+                // Clean up multiple spaces and repeated commas
+                formatted = formatted.replace(/\s+/g, ' ').replace(/, ,/g, ', ').replace(/,+/g, ',').trim();
+                setName(formatted);
+              }}
               onKeyDown={handleKeyDown}
               placeholder={t(language, 'addPlaceholder')}
               className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
               autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
+              {t(language, 'channelName')}
+            </label>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t(language, 'channelName')}
+              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
             />
           </div>
 
@@ -198,10 +235,38 @@ function AppContent() {
     saveChannels(updated);
   }
 
+  function handleUpdateChannel(oldChannel, updatedChannel) {
+    const updated = channels.map(c => c === oldChannel ? updatedChannel : c);
+    setChannels(updated);
+    saveChannels(updated);
+    toast.success(t(language, 'channelUpdated', updatedChannel.name || updatedChannel.handle));
+  }
+
   function handleToggleFavorite(channel) {
     const updated = channels.map(c =>
       c === channel ? { ...c, favorite: !c.favorite } : c
     );
+    setChannels(updated);
+    saveChannels(updated);
+  }
+
+  function handleImportChannels(imported) {
+    const existing = new Map(channels.map(c => [c.handle.toLowerCase(), c]));
+    let added = 0;
+    imported.forEach(ch => {
+      const key = ch.handle.toLowerCase();
+      if (!existing.has(key)) {
+        existing.set(key, {
+          handle: ch.handle,
+          name: ch.name || '',
+          category: ch.category || 'Unspecified',
+          favorite: ch.favorite || false,
+        });
+        added++;
+      }
+    });
+    if (added === 0) return;
+    const updated = Array.from(existing.values());
     setChannels(updated);
     saveChannels(updated);
   }
@@ -258,13 +323,15 @@ function AppContent() {
           <ChannelsPage
             channels={channels}
             onRemoveChannel={handleRemoveChannel}
+            onUpdateChannel={handleUpdateChannel}
             onToggleFavorite={handleToggleFavorite}
+            categories={categories}
           />
         );
       case 'settings':
         return <SettingsPage />;
       case 'export':
-        return <ExportPage channels={channels} />;
+        return <ExportPage channels={channels} onImport={handleImportChannels} />;
       default:
         return null;
     }
@@ -273,7 +340,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-yt-bg">
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           style: {
             background: 'var(--bg-card)',
@@ -286,6 +353,7 @@ function AppContent() {
         title={pageTitle()}
         onAddChannel={() => setShowAddModal(true)}
         onMenuToggle={() => setSidebarOpen(prev => !prev)}
+        onGoHome={() => { setActiveTab('home'); setSelectedCategory(null); }}
       />
       <ChannelSidebar
         activeTab={activeTab}
