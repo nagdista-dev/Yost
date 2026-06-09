@@ -157,12 +157,13 @@ async function scrapeChannel(handle) {
             };
         });
 
-        // First, extract comment counts from YouTube's embedded JSON data (reliable, no login needed)
-        const commentCountByText = await page.evaluate(() => {
-            const map = {};
+        // First, extract comment counts + actual comments from YouTube's embedded JSON data
+        const { commentCountByText, commentDataByUrl } = await page.evaluate(() => {
+            const countMap = {};
+            const commentsMap = {};
             try {
                 const data = window.ytInitialData;
-                if (!data) return map;
+                if (!data) return { commentCountByText: {}, commentDataByUrl: {} };
                 const tabs = data.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
                 for (const tab of tabs) {
                     const tabRenderer = tab.tabRenderer || tab.expandableTabRenderer;
@@ -171,19 +172,52 @@ async function scrapeChannel(handle) {
                     for (const section of sections) {
                         const items = section.itemSectionRenderer?.contents || [];
                         for (const item of items) {
-                            const post = item.backstagePostThreadRenderer?.post?.backstagePostRenderer;
-                            if (post) {
-                                const text = (post.contentText?.runs || [])
-                                    .map(r => r.text).join('').trim().substring(0, 120);
-                                const count = post.commentCount || '0';
-                                if (text) map[text] = count;
+                            const thread = item.backstagePostThreadRenderer;
+                            const post = thread?.post?.backstagePostRenderer;
+                            if (!post) continue;
+
+                            const text = (post.contentText?.runs || [])
+                                .map(r => r.text).join('').trim().substring(0, 120);
+                            const count = post.commentCount || '0';
+                            if (text) countMap[text] = count;
+
+                            // Extract post URL from navigation endpoint
+                            let postUrl = '';
+                            const navUrl = post.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url;
+                            if (navUrl) {
+                                postUrl = navUrl.startsWith('http') ? navUrl : `https://www.youtube.com${navUrl}`;
+                            }
+
+                            // Extract embedded comments from the thread
+                            const commentThreads = thread?.comments || [];
+                            const extracted = [];
+                            for (const ct of commentThreads) {
+                                const cr = ct?.commentThreadRenderer?.comment?.commentRenderer;
+                                if (!cr) continue;
+                                const runs = cr.contentText?.runs || [];
+                                extracted.push({
+                                    author: cr.authorText?.simpleText || cr.authorText?.runs?.[0]?.text || '',
+                                    avatar: cr.authorThumbnail?.thumbnails?.[0]?.url || '',
+                                    text: runs.map(t => t.text).join('').trim(),
+                                    likes: cr.voteCount?.simpleText || cr.voteCount?.accessibility?.accessibilityData?.label || '0',
+                                    time: cr.publishedTimeText?.runs?.[0]?.text || '',
+                                    replies: '',
+                                });
+                            }
+                            if (extracted.length > 0 && postUrl) {
+                                commentsMap[postUrl.toLowerCase()] = extracted;
                             }
                         }
                     }
                 }
             } catch (_) { /* fallback to DOM */ }
-            return map;
+            return { commentCountByText: countMap, commentDataByUrl: commentsMap };
         });
+
+        // Store extracted comments in the global comments cache
+        for (const [url, cmts] of Object.entries(commentDataByUrl)) {
+            commentsCache.set(url, { comments: cmts, fetchedAt: Date.now() });
+        }
 
         const posts = await page.evaluate((jsonCounts) => {
             function findCommentCount(node) {
@@ -351,6 +385,132 @@ app.get('/api/cache', (_req, res) => {
     res.json({ ttlMs: CACHE_TTL_MS, entries, activeScrapes, queued: scrapeQueue.length });
 });
 
+// ─── Latest video scraping ──────────────────────────────────────────────────
+const videoCache = new Map();
+const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
+
+async function scrapeLatestVideo(handle) {
+    const cacheKey = handle.toLowerCase();
+    const cached = videoCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < VIDEO_CACHE_TTL_MS) {
+        return cached.video;
+    }
+
+    // No Puppeteer needed – extract channel ID from the HTML of the channel page,
+    // then fetch the RSS feed. This avoids semaphore contention with post scraping.
+    try {
+        const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
+            signal: AbortSignal.timeout(20000),
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        });
+
+        if (!htmlRsp.ok) {
+            console.warn(`[video] channel page returned ${htmlRsp.status} for @${handle}`);
+            return null;
+        }
+
+        const html = await htmlRsp.text();
+
+        // Extract channel ID from meta tag URL (e.g. channel_id=UC-lHJZR3Gqxm24_Vd_AJ5Yw)
+        const idMatch = html.match(/channel_id=(UC[\w-]+)/);
+        if (!idMatch) {
+            console.warn(`[video] could not find channel ID in HTML for @${handle}`);
+            return null;
+        }
+
+        const channelId = idMatch[1];
+
+        console.log(`[video] found channel ID ${channelId} for @${handle}`);
+
+        // Fetch the RSS feed
+        const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+        const rssRsp = await fetch(rssUrl, {
+            signal: AbortSignal.timeout(15000),
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        });
+
+        if (!rssRsp.ok) {
+            console.warn(`[video] RSS feed returned ${rssRsp.status} for @${handle}`);
+            return null;
+        }
+
+        const xml = await rssRsp.text();
+
+        // Parse the first entry
+        const entryMatch = xml.match(/<entry[^>]*>([\s\S]*?)<\/entry>/);
+        if (!entryMatch) {
+            console.warn(`[video] no <entry> in RSS for @${handle}`);
+            return null;
+        }
+
+        const entryXml = entryMatch[1];
+
+        const videoIdMatch = entryXml.match(/<[^:>]*:?videoId[^>]*>([^<]+)<\/[^>]*:?videoId[^>]*>/);
+        const titleMatch = entryXml.match(/<title[^>]*>([^<]+)<\/title>/);
+        const publishedMatch = entryXml.match(/<published[^>]*>([^<]+)<\/published>/);
+
+        const videoId = videoIdMatch ? videoIdMatch[1].trim() : '';
+        const title = titleMatch ? titleMatch[1].trim() : '';
+        const publishedDate = publishedMatch ? publishedMatch[1].trim() : '';
+
+        if (!videoId) {
+            console.warn(`[video] no videoId in RSS entry for @${handle}`);
+            return null;
+        }
+
+        // Fetch the video page for view count and like count (embedded in HTML source)
+        let views = '';
+        let likes = '';
+        try {
+            const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+                signal: AbortSignal.timeout(10000),
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            });
+            if (vRsp.ok) {
+                const vHtml = await vRsp.text();
+                const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
+                const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
+                if (vcMatch) views = vcMatch[1];
+                if (lcMatch) likes = lcMatch[1];
+            }
+        } catch (_) {
+            // non-critical – views/likes stay empty
+        }
+
+        const video = {
+            videoId,
+            title,
+            thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+            views,
+            likes,
+            length: '',
+            published: publishedDate,
+            videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        };
+
+        console.log(`[video] found: ${video.title} (${video.videoId}, ${views} views)`);
+        videoCache.set(cacheKey, { video, fetchedAt: Date.now() });
+        return video;
+    } catch (e) {
+        console.warn(`[video] error for @${handle}: ${e.message}`);
+        return null;
+    }
+}
+
+app.get('/api/latest-video', async (req, res) => {
+    let handle = req.query.channelHandle || req.query.handle;
+    if (!handle) return res.status(400).json({ error: 'Channel handle is required' });
+    if (handle.startsWith('@')) handle = handle.slice(1);
+
+    try {
+        const video = await scrapeLatestVideo(handle);
+        res.json({ video });
+    } catch (err) {
+        console.error(`[video] failed for @${handle}:`, err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ─── Comments scraping ────────────────────────────────────────────────────────
 const commentsCache = new Map();
 const COMMENTS_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -379,17 +539,110 @@ async function scrapePostComments(postUrl) {
         });
 
         await page.setViewport({ width: 1280, height: 800 });
-        await page.goto(postUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        try {
-            await page.waitForSelector('ytd-comment-thread-renderer', { timeout: 15000 });
-        } catch (_) {
-            return [];
+        console.log(`[comments] navigating to ${postUrl}`);
+        await page.goto(postUrl, { waitUntil: 'networkidle0', timeout: 35000 });
+
+        // Give YouTube a moment to hydrate the comment section
+        await new Promise(r => setTimeout(r, 3000));
+
+        // Try extracting from ytInitialData JSON first (most reliable)
+        const jsonComments = await page.evaluate(() => {
+            try {
+                const data = window.ytInitialData;
+                if (!data) return null;
+
+                const results = [];
+
+                // Walk through all possible comment locations in the response
+                function walkComments(obj) {
+                    if (!obj || typeof obj !== 'object') return;
+                    if (obj.commentRenderer) {
+                        const r = obj.commentRenderer;
+                        const runs = r.contentText?.runs || [];
+                        results.push({
+                            author: r.authorText?.simpleText || r.authorText?.runs?.[0]?.text || '',
+                            avatar: r.authorThumbnail?.thumbnails?.[0]?.url || '',
+                            text: runs.map(t => t.text).join('').trim(),
+                            likes: r.voteCount?.simpleText || r.voteCount?.accessibility?.accessibilityData?.label || '0',
+                            time: r.publishedTimeText?.runs?.[0]?.text || '',
+                            replies: '',
+                        });
+                        return;
+                    }
+                    if (Array.isArray(obj)) {
+                        obj.forEach(walkComments);
+                    } else {
+                        for (const key of Object.keys(obj)) {
+                            try { walkComments(obj[key]); } catch (_) {}
+                        }
+                    }
+                }
+
+                // Look in continuation contents (used for dynamically loaded comments on post pages)
+                const continuationContents =
+                    data.continuationContents?.commentSectionContinuation?.contents ||
+                    data.continuationContents?.itemSectionContinuation?.contents ||
+                    [];
+
+                walkComments(continuationContents);
+
+                // Also check onResponseReceivedEndpoints (used by YouTube for incremental loads)
+                const endpoints = data.onResponseReceivedEndpoints || [];
+                for (const ep of endpoints) {
+                    const actions = ep.appendContinuationItemsAction?.continuationItems || [];
+                    walkComments(actions);
+                }
+
+                return results.length > 0 ? results : null;
+            } catch (_) {
+                return null;
+            }
+        });
+
+        if (jsonComments && jsonComments.length > 0) {
+            console.log(`[comments] extracted ${jsonComments.length} from ytInitialData`);
+            commentsCache.set(cacheKey, { comments: jsonComments, fetchedAt: Date.now() });
+            return jsonComments;
         }
 
-        // Scroll to trigger lazy loading
-        await page.evaluate(() => window.scrollBy(0, 400));
-        await new Promise(r => setTimeout(r, 1500));
+        console.log(`[comments] ytInitialData had no comments, trying DOM…`);
+
+        // Fallback: scroll down to trigger lazy comment loading
+        await page.evaluate(() => {
+            const commentsEl = document.querySelector('#comments, ytd-comments');
+            if (commentsEl) commentsEl.scrollIntoView({ behavior: 'instant', block: 'center' });
+            window.scrollBy(0, 600);
+        });
+        await new Promise(r => setTimeout(r, 3000));
+
+        // Try multiple selectors for comment threads
+        let commentThreads = await page.evaluate(() => {
+            const selectors = [
+                'ytd-comment-thread-renderer',
+                '#comments ytd-comment-thread-renderer',
+                'ytd-item-section-renderer ytd-comment-thread-renderer',
+                '#comment-section ytd-comment-thread-renderer',
+            ];
+            for (const sel of selectors) {
+                const el = document.querySelector(sel);
+                if (el) return document.querySelectorAll(sel);
+            }
+            return [];
+        });
+
+        if (commentThreads.length === 0) {
+            // Try a second scroll + wait
+            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+            await new Promise(r => setTimeout(r, 3000));
+
+            commentThreads = await page.evaluate(() => document.querySelectorAll('ytd-comment-thread-renderer'));
+        }
+
+        if (commentThreads.length === 0) {
+            console.log(`[comments] no comment threads found on page`);
+            return [];
+        }
 
         const comments = await page.evaluate(() => {
             return Array.from(document.querySelectorAll('ytd-comment-thread-renderer')).map(thread => {
@@ -414,6 +667,7 @@ async function scrapePostComments(postUrl) {
             }).filter(Boolean);
         });
 
+        console.log(`[comments] extracted ${comments.length} from DOM`);
         commentsCache.set(cacheKey, { comments, fetchedAt: Date.now() });
         return comments;
     } finally {

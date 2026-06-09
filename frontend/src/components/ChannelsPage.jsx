@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Heart, Trash2, Edit2, X } from 'lucide-react';
+import { Search, Heart, Trash2, Edit2, X, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChannel, onToggleFavorite, selectedCategory, onSelectCategory, categories }) {
+export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChannel, onToggleFavorite, categories }) {
   const { language } = useTheme();
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(null);
   const [editing, setEditing] = useState(null);
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState('');
@@ -17,19 +19,15 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
     function onKeyDown(e) {
       if (e.key === 'Escape') {
         setConfirmDelete(null);
+        setConfirmOpen(null);
         setEditing(null);
       }
     }
-    if (confirmDelete || editing) {
+    if (confirmDelete || confirmOpen || editing) {
       document.addEventListener('keydown', onKeyDown);
       return () => document.removeEventListener('keydown', onKeyDown);
     }
-  }, [confirmDelete, editing]);
-
-  // Category filter UI
-  const handleCategoryClick = (cat) => {
-    onSelectCategory(cat === 'All' ? null : cat);
-  };
+  }, [confirmDelete, confirmOpen, editing]);
 
   function matches(ch, query) {
     const q = query.toLowerCase();
@@ -39,7 +37,11 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
     );
   }
 
-    const filteredChannels = channels.filter(ch => {    const matchesSearch = matches(ch, search);    const matchesCategory = !selectedCategory || ch.category === selectedCategory;    return matchesSearch && matchesCategory;  });
+  const filteredChannels = channels.filter(ch => {
+    const matchesSearch = matches(ch, search);
+    const matchesCategory = !categoryFilter || ch.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   function startEdit(ch) {
     setEditing(ch);
@@ -49,7 +51,12 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
 
   function handleSaveEdit() {
     if (!editing) return;
-    onUpdateChannel(editing, { ...editing, name: editName.trim(), category: editCategory.trim() || 'Unspecified' });
+    const rawCat = editCategory.trim();
+    // Normalize translated "unspecified" back to "Unspecified"
+    const category = (!rawCat || rawCat === t(language, 'unspecified') || rawCat === 'Unspecified')
+      ? 'Unspecified'
+      : rawCat;
+    onUpdateChannel(editing, { ...editing, name: editName.trim(), category });
     setEditing(null);
   }
 
@@ -75,6 +82,31 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
             className={`w-full bg-yt-input text-yt-text rounded-lg py-2 md:py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'}`}
           />
         </div>
+
+        {/* Category filter */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-5">
+            {['All', ...categories].map(cat => {
+              const isActive = cat === 'All' ? !categoryFilter : categoryFilter === cat;
+              const label = cat === 'All' ? t(language, 'allCategories')
+                : cat === 'Unspecified' ? t(language, 'unspecified')
+                : cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat === 'All' ? null : cat)}
+                  className={`px-3 py-1.5 text-xs md:text-sm rounded-lg border transition ${
+                    isActive
+                      ? 'bg-yt-accent text-white border-yt-accent'
+                      : 'bg-yt-bg-tertiary/50 text-yt-text-secondary border-yt-border/40 hover:border-yt-accent/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {channels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-yt-text-muted">
@@ -122,8 +154,17 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="text-yt-text text-sm md:text-base truncate">
-                            {ch.handle}
+                          <div className="flex items-center gap-2">
+                            <span className="text-yt-text text-sm md:text-base truncate">
+                              {ch.handle}
+                            </span>
+                            <button
+                              onClick={() => setConfirmOpen(ch)}
+                              className="text-yt-text-muted hover:text-yt-accent p-1 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title={t(language, 'openChannel')}
+                            >
+                              <ExternalLink size={14} />
+                            </button>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             {ch.category && ch.category !== 'Unspecified' && (
@@ -160,7 +201,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
       </div>
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -187,8 +228,39 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
         </div>
       )}
 
+      {confirmOpen && (
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmOpen(null)}>
+          <div
+            className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-yt-text text-lg font-bold mb-2">{t(language, 'openChannel')}</h2>
+            <p className="text-yt-text-secondary text-sm mb-6">
+              {t(language, 'openChannelConfirm', confirmOpen.handle)}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmOpen(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary transition"
+              >
+                {t(language, 'cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  window.open(`https://www.youtube.com/${confirmOpen.handle}/videos`, '_blank', 'noopener,noreferrer');
+                  setConfirmOpen(null);
+                }}
+                className="bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+              >
+                {t(language, 'openChannel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -231,8 +303,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                   className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
                 />
                 <datalist id="edit-category-suggestions">
-                  <option value={t(language, 'unspecified')} />
-                  {categories.filter(c => c !== 'Unspecified').map(c => (
+                  {['Unspecified', ...categories.filter(c => c !== 'Unspecified')].map(c => (
                     <option key={c} value={c} />
                   ))}
                 </datalist>

@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize } from 'lucide-react';
+import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize, Video } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
 const tabs = [
   { id: 'home', icon: Home, labelKey: 'tabHome' },
+  { id: 'videos', icon: Video, labelKey: 'tabVideos' },
   { id: 'favorites', icon: Heart, labelKey: 'tabFavorites' },
   { id: 'channels', icon: Tv, labelKey: 'tabChannels' },
   { id: 'settings', icon: Settings, labelKey: 'tabSettings' },
@@ -199,8 +200,8 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
 
       {/* ── Mobile sidebar (drawer) ──────────────────────────────────────── */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50" onClick={onClose}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="md:hidden fixed top-0 left-0 w-screen h-screen z-50" onClick={onClose}>
+          <div className="absolute inset-0 bg-black/60" />
           <aside
             className="absolute start-0 top-0 bottom-0 w-72 bg-yt-sidebar flex flex-col shadow-2xl"
             onClick={e => e.stopPropagation()}

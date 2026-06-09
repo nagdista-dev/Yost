@@ -9,6 +9,7 @@ import { t } from '../i18n';
 
 const PAGE_LOAD_TIME = Date.now();
 const POST_CACHE_KEY = 'yt_feed_posts_cache';
+const SEEN_STORAGE_KEY = 'yt_feed_seen';
 
 // ─── Local post cache (localStorage) ─────────────────────────────────────────
 function loadPostCache() {
@@ -192,6 +193,37 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
   }, []);
 
   const [postSearch, setPostSearch] = useState('');
+  const searchRef = useRef(null);
+
+  // ── Seen tracking ─────────────────────────────────────────────────
+  const [seenUrls, setSeenUrls] = useState(() => {
+    try {
+      const raw = localStorage.getItem(SEEN_STORAGE_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  function markSeen(postUrl) {
+    if (!postUrl || seenUrls.has(postUrl)) return;
+    const next = new Set(seenUrls);
+    next.add(postUrl);
+    setSeenUrls(next);
+    try {
+      localStorage.setItem(SEEN_STORAGE_KEY, JSON.stringify([...next]));
+    } catch { /* ignore */ }
+  }
+
+  // Keyboard shortcut: 's' → focus search
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 's' && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // How many channels are served from cache
   const cacheInfo = useMemo(() => {
@@ -315,9 +347,10 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
       <div className="relative">
         <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
         <input
+          ref={searchRef}
           value={postSearch}
           onChange={e => setPostSearch(e.target.value)}
-          placeholder={t(language, 'searchPosts')}
+          placeholder={`${t(language, 'searchPosts')} (s)`}
           className={`w-full bg-yt-input text-yt-text rounded-lg py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-10 pl-3' : 'pl-10 pr-3'}`}
         />
       </div>
@@ -331,6 +364,8 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
           post={post}
           channelName={post._channelName}
           channelAvatar={post._channelAvatar}
+          isSeen={post.postUrl ? seenUrls.has(post.postUrl) : false}
+          onMarkSeen={() => post.postUrl && markSeen(post.postUrl)}
         />
       ))}
 

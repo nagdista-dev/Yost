@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ThumbsUp, ExternalLink, X, ChevronLeft, ChevronRight, ImageOff, Share2, MessageCircle } from 'lucide-react';
+import { ThumbsUp, ExternalLink, X, ChevronLeft, ChevronRight, ImageOff, Share2, MessageCircle, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useTheme } from '../context/useTheme';
@@ -51,7 +51,7 @@ function Lightbox({ images, startIndex, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
     >
       {/* Close */}
@@ -237,7 +237,7 @@ function ImageGrid({ images, onOpen }) {
 
 // ── PostCard ──────────────────────────────────────────────────────────────────
 
-export default function PostCard({ post, channelName, channelAvatar }) {
+export default function PostCard({ post, channelName, channelAvatar, isSeen, onMarkSeen }) {
   const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(null);
@@ -248,6 +248,11 @@ export default function PostCard({ post, channelName, channelAvatar }) {
   const { language } = useTheme();
 
   const handle = post._channelKey?.replace('@', '') || '';
+
+  // Mark as seen on first interaction
+  const markSeen = useCallback(() => {
+    if (!isSeen && onMarkSeen) onMarkSeen();
+  }, [isSeen, onMarkSeen]);
 
   // Close modals on Escape
   useEffect(() => {
@@ -292,6 +297,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
   }
 
   function handleOpenComments() {
+    markSeen();
     setShowComments(true);
     if (comments) return; // already loaded
     setCommentsLoading(true);
@@ -300,8 +306,9 @@ export default function PostCard({ post, channelName, channelAvatar }) {
         setComments(data.comments);
         setCommentsLoading(false);
       })
-      .catch(() => {
-        toast.error('Failed to load comments');
+      .catch((err) => {
+        const msg = err.response?.data?.error || 'Failed to load comments';
+        toast.error(msg);
         setCommentsLoading(false);
       });
   }
@@ -312,7 +319,15 @@ export default function PostCard({ post, channelName, channelAvatar }) {
 
   return (
     <>
-      <article className="bg-yt-bg-card rounded-2xl border border-yt-border shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+      <article
+        className="bg-yt-bg-card rounded-2xl border border-yt-border shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative cursor-pointer"
+        onClick={markSeen}
+      >
+        {/* Seen indicator */}
+        {!isSeen && (
+          <div className="absolute top-4 start-4 w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-yt-bg-card z-10" />
+        )}
+
         {/* ── Header ── */}
         <div className="flex items-start gap-3 px-4 pt-4 pb-3">
           {/* Avatar */}
@@ -336,7 +351,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
             <span
               role="button"
               tabIndex={0}
-              onClick={() => setConfirmChannel(true)}
+              onClick={() => { markSeen(); setConfirmChannel(true); }}
               onKeyDown={e => e.key === 'Enter' && setConfirmChannel(true)}
               className="cursor-pointer block text-yt-text font-semibold text-sm leading-tight truncate hover:text-yt-accent transition-colors"
             >
@@ -354,7 +369,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
             </p>
             {isLong && (
               <button
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => { markSeen(); setExpanded(!expanded); }}
                 className="text-yt-accent text-xs mt-2 font-medium hover:opacity-75 transition-opacity"
               >
                 {expanded ? t(language, 'showLess') : t(language, 'showMore')}
@@ -379,21 +394,38 @@ export default function PostCard({ post, channelName, channelAvatar }) {
           </span>
 
           {/* Comments */}
-          <button
-            onClick={handleOpenComments}
-            className="inline-flex items-center gap-1.5 text-yt-text-muted text-xs font-medium hover:text-yt-accent transition-colors"
-            aria-label="Comments"
-          >
-            <MessageCircle size={13} className="text-yt-text-secondary" />
-            {formatCount(post.comments)}
-          </button>
+          {post.postUrl && (
+            <button
+              onClick={handleOpenComments}
+              className="inline-flex items-center gap-1.5 text-yt-text-muted text-xs font-medium hover:text-yt-accent transition-colors"
+              aria-label="Comments"
+            >
+              <MessageCircle size={13} className="text-yt-text-secondary" />
+              {formatCount(post.comments)}
+            </button>
+          )}
 
           {/* Spacer */}
           <div className="flex-1" />
 
+          {/* Copy text */}
+          {post.text && (
+            <button
+              onClick={() => {
+                markSeen();
+                navigator.clipboard.writeText(post.text).then(() => toast.success(t(language, 'textCopied'))).catch(() => {});
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-yt-text-muted hover:text-yt-accent hover:bg-yt-accent/10 transition-all"
+              aria-label={t(language, 'copyText')}
+            >
+              <Copy size={14} />
+            </button>
+          )}
+
           {/* Share */}
           <button
             onClick={() => {
+              markSeen();
               const url = post.postUrl || `https://www.youtube.com/@${handle}`;
               if (navigator.share) {
                 navigator.share({ title: channelName, url }).catch(() => {});
@@ -434,7 +466,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
       {/* ── Comments modal ── */}
       {showComments && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50"
           onClick={() => setShowComments(false)}
         >
           <div
@@ -519,7 +551,7 @@ export default function PostCard({ post, channelName, channelAvatar }) {
       {/* ── Channel confirm ── */}
       {confirmChannel && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50"
           onClick={() => setConfirmChannel(false)}
         >
           <div

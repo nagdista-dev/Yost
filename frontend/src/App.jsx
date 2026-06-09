@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 import ChannelSidebar from './components/ChannelSidebar';
 import HomePage from './components/HomePage';
 import ChannelsPage from './components/ChannelsPage';
+import VideosPage from './components/VideosPage';
 import SettingsPage from './components/SettingsPage';
 import ExportPage from './components/ExportPage';
 import { t } from './i18n';
@@ -93,7 +94,7 @@ function AddChannelModal({ show, onClose, onAdd, categories }) {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
         className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-md mx-4 shadow-2xl"
         onClick={e => e.stopPropagation()}
@@ -281,6 +282,7 @@ function AppContent() {
   const pageTitle = () => {
     switch (activeTab) {
       case 'home': return t(language, 'appTitle');
+      case 'videos': return t(language, 'tabVideos');
       case 'favorites': return t(language, 'favoritesTitle');
       case 'channels': return t(language, 'channels');
       case 'settings': return t(language, 'settingsTitle');
@@ -307,6 +309,8 @@ function AppContent() {
           />
         );
       }
+      case 'videos':
+        return <VideosPage channels={channels} />;
       case 'favorites': {
         const favChannels = channels.filter(c => c.favorite);
         return (
