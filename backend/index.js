@@ -458,9 +458,11 @@ async function scrapeLatestVideo(handle) {
             return null;
         }
 
-        // Fetch the video page for view count and like count (embedded in HTML source)
+        // Fetch the video page for view count, like count, and comment count (embedded in HTML source)
         let views = '';
         let likes = '';
+        let comments = '';
+        let dislikes = '';
         try {
             const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
                 signal: AbortSignal.timeout(10000),
@@ -470,11 +472,26 @@ async function scrapeLatestVideo(handle) {
                 const vHtml = await vRsp.text();
                 const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
                 const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
+                const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
                 if (vcMatch) views = vcMatch[1];
                 if (lcMatch) likes = lcMatch[1];
+                if (ccMatch) comments = ccMatch[1];
             }
         } catch (_) {
             // non-critical – views/likes stay empty
+        }
+
+        // Fetch dislike count from returnyoutubedislike.com (non-blocking)
+        try {
+            const ddRsp = await fetch(`https://returnyoutubedislike.com/api/v1?videoId=${videoId}`, {
+                signal: AbortSignal.timeout(5000),
+            });
+            if (ddRsp.ok) {
+                const dd = await ddRsp.json();
+                dislikes = String(dd.dislikes || '');
+            }
+        } catch (_) {
+            // non-critical
         }
 
         const video = {
@@ -483,6 +500,8 @@ async function scrapeLatestVideo(handle) {
             thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
             views,
             likes,
+            comments,
+            dislikes,
             length: '',
             published: publishedDate,
             videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
