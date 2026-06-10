@@ -1,6 +1,8 @@
-import { Moon, Sun, Languages } from 'lucide-react';
+import { Moon, Sun, Languages, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
+import StartPageSelector from '../components/StartPageSelector';
 
 export default function SettingsPage() {
   const {
@@ -12,6 +14,14 @@ export default function SettingsPage() {
   const toggleSetting = (key, value) => {
     updateSetting(key, !value);
   };
+
+  function handleClearCache() {
+    try {
+      localStorage.removeItem('yt_feed_posts_cache');
+      localStorage.removeItem('yt_feed_seen');
+      toast.success(t(language, 'cacheCleared'));
+    } catch {}
+  }
 
   return (
     <div className="bg-yt-bg-card rounded-xl p-6 md:p-8 lg:p-10 border border-yt-border">
@@ -83,6 +93,28 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <p className="text-yt-text-secondary text-xs font-semibold mb-3 uppercase tracking-wide">
+            {t(language, 'startPage')}
+          </p>
+          <p className="text-yt-text-muted text-xs mb-3">{t(language, 'startPageDesc')}</p>
+          <StartPageSelector />
+        </div>
+
+        <div>
+          <p className="text-yt-text-secondary text-xs font-semibold mb-3 uppercase tracking-wide">
+            {t(language, 'clearCache')}
+          </p>
+          <p className="text-yt-text-muted text-xs mb-3">{t(language, 'clearCacheDesc')}</p>
+          <button
+            onClick={handleClearCache}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition border border-red-500/20"
+          >
+            <Trash2 size={16} />
+            {t(language, 'clearCache')}
+          </button>
         </div>
 
         <div>

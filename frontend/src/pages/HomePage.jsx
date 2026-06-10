@@ -1,103 +1,27 @@
-import { useEffect, useReducer, useCallback, useMemo, useRef, useState } from 'react';
-import { RefreshCw, Database, ChevronUp, Search } from 'lucide-react';
+import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
+import { RefreshCw, Tv } from 'lucide-react';
 import PostCard from '../components/PostCard';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import CacheInfo from '../components/CacheInfo';
+import PostSearch from '../components/PostSearch';
+import ScrollToTop from '../components/ScrollToTop';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import api from '../api';
 import { t } from '../i18n';
+import usePostCache from '../hooks/usePostCache';
+import useFeedReducer from '../hooks/useFeedReducer';
+import useSeenTracking from '../hooks/useSeenTracking';
 
 const PAGE_LOAD_TIME = Date.now();
-const POST_CACHE_KEY = 'yt_feed_posts_cache';
-const SEEN_STORAGE_KEY = 'yt_feed_seen';
-
-// ─── Local post cache (localStorage) ─────────────────────────────────────────
-function loadPostCache() {
-  try {
-    const raw = localStorage.getItem(POST_CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function savePostCache(cacheObj) {
-  try {
-    localStorage.setItem(POST_CACHE_KEY, JSON.stringify(cacheObj));
-  } catch {
-    // localStorage full – ignore
-  }
-}
-
-function getPostCache(handleLower, postCache) {
-  return postCache[handleLower] || null;
-}
-
-// ─── Reducer ──────────────────────────────────────────────────────────────────
-function feedReducer(state, action) {
-  switch (action.type) {
-    case 'FETCH_START': {
-      const activeKeys = new Set(action.activeHandles.map(h => h.replace('@', '').toLowerCase()));
-      const cleanedData = {};
-      Object.entries(state.channelData).forEach(([channel, data]) => {
-        const cleanC = channel.replace('@', '').toLowerCase();
-        if (activeKeys.has(cleanC)) {
-          cleanedData[channel] = data;
-        }
-      });
-      return { ...state, channelData: cleanedData, loading: true };
-    }
-    case 'FETCH_CHANNEL_DONE':
-      return {
-        ...state,
-        channelData: {
-          ...state.channelData,
-          [action.channel]: action.data,
-        },
-      };
-    case 'FETCH_ALL_DONE':
-      return { ...state, loading: false };
-    default:
-      return state;
-  }
-}
-
-/** Format a Unix timestamp (ms) as "X min ago" or "X hr ago" */
-function formatAge(fetchedAt, language) {
-  if (!fetchedAt) return null;
-  const diffMs = Date.now() - fetchedAt;
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return t(language, 'justNow');
-  if (diffMin < 60) return t(language, 'minAgo', diffMin);
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return t(language, 'hrAgo', diffHr);
-  return t(language, 'dAgo', Math.floor(diffHr / 24));
-}
 
 export default function HomePage({ channels, refreshTrigger, onRefreshAll, emptyMessage }) {
-  const postCacheRef = useRef(loadPostCache());
+  const { postCacheRef, getPostCache, updateCache } = usePostCache();
   const loadIdRef = useRef(0);
-
-  // Seed initial state from localStorage so posts appear instantly (SWR)
-  const initialState = useMemo(() => {
-    if (channels.length === 0) return { channelData: {}, loading: false };
-    const seeded = {};
-    let anySeeded = false;
-    channels.forEach(ch => {
-      const handle = (typeof ch === 'string' ? ch : ch.handle).replace('@', '').toLowerCase();
-      const entry = getPostCache(handle, postCacheRef.current);
-      if (entry) {
-        seeded[entry.handle] = entry.data;
-        anySeeded = true;
-      }
-    });
-    // loading=true so the background fetch still runs; if nothing seeded, spinner shows
-    return { channelData: seeded, loading: !anySeeded };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
-
-  const [{ channelData, loading }, dispatch] = useReducer(feedReducer, initialState);
+  const [{ channelData, loading }, dispatch] = useFeedReducer(channels, postCacheRef, getPostCache);
   const { language } = useTheme();
+  const { seenUrls, markSeen } = useSeenTracking();
+  const [postSearch, setPostSearch] = useState('');
 
   function getHandle(ch) {
     return typeof ch === 'string' ? ch : ch.handle;
@@ -128,15 +52,12 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
 
     channels.forEach(async (ch) => {
       const { channel, data, error } = await fetchChannel(ch, forceRefresh);
-
-      // If a new load cycle has started, discard this result to prevent race conditions
       if (currentLoadId !== loadIdRef.current) return;
 
       const handleKey = channel.replace('@', '').toLowerCase();
       let resolvedData = data;
 
       if (error) {
-        // Fall back to stale localStorage data rather than showing an error
         const stale = postCacheRef.current[handleKey];
         if (stale) {
           resolvedData = { ...stale.data, fromCache: true, stale: true, fetchedAt: stale.fetchedAt };
@@ -146,9 +67,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
         }
       } else {
         resolvedData = data;
-        // Persist to localStorage cache
-        postCacheRef.current[handleKey] = { handle: channel, data, fetchedAt: Date.now() };
-        savePostCache(postCacheRef.current);
+        updateCache(handleKey, channel, data);
       }
 
       dispatch({ type: 'FETCH_CHANNEL_DONE', channel, data: resolvedData });
@@ -166,14 +85,12 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
         dispatch({ type: 'FETCH_ALL_DONE' });
       }
     });
-  }, [channels, fetchChannel, language]);
+  }, [channels, fetchChannel, language, dispatch, updateCache, postCacheRef]);
 
   useEffect(() => {
     loadChannels(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channels, refreshTrigger]);
+  }, [channels, refreshTrigger, loadChannels]);
 
-  // Retry once after background scrapes complete (no cache found initially)
   useEffect(() => {
     if (loading) return;
     const hasEmptyUncached = Object.values(channelData).some(
@@ -184,48 +101,6 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
     return () => clearTimeout(timer);
   }, [loading, channelData, loadChannels]);
 
-  // ── Scroll to top ──────────────────────────────────────────────────
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const [postSearch, setPostSearch] = useState('');
-  const searchRef = useRef(null);
-
-  // ── Seen tracking ─────────────────────────────────────────────────
-  const [seenUrls, setSeenUrls] = useState(() => {
-    try {
-      const raw = localStorage.getItem(SEEN_STORAGE_KEY);
-      return raw ? new Set(JSON.parse(raw)) : new Set();
-    } catch { return new Set(); }
-  });
-
-  function markSeen(postUrl) {
-    if (!postUrl || seenUrls.has(postUrl)) return;
-    const next = new Set(seenUrls);
-    next.add(postUrl);
-    setSeenUrls(next);
-    try {
-      localStorage.setItem(SEEN_STORAGE_KEY, JSON.stringify([...next]));
-    } catch { /* ignore */ }
-  }
-
-  // Keyboard shortcut: 's' → focus search
-  useEffect(() => {
-    function onKeyDown(e) {
-      if (e.key === 's' && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, []);
-
-  // How many channels are served from cache
   const cacheInfo = useMemo(() => {
     const fromCache = Object.values(channelData).filter(d => d?.fromCache);
     if (fromCache.length === 0) return null;
@@ -291,13 +166,20 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
 
   if (channels.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-yt-text-muted">
-        <p className="text-lg md:text-xl" style={{ fontSize: 'var(--font-size-lg)' }}>{emptyMessage || t(language, 'noChannels')}</p>
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
+        <div className="w-16 h-16 rounded-2xl bg-yt-bg-tertiary flex items-center justify-center mb-4">
+          <Tv size={28} className="text-yt-text-muted" />
+        </div>
+        <p className="text-lg md:text-xl text-yt-text-muted mb-2" style={{ fontSize: 'var(--font-size-lg)' }}>
+          {emptyMessage || t(language, 'noChannels')}
+        </p>
+        <p className="text-sm text-yt-text-muted/70 max-w-sm" style={{ fontSize: 'var(--font-size-sm)' }}>
+          {t(language, 'noChannelsHint')}
+        </p>
       </div>
     );
   }
 
-  // Show spinner only when we have no posts at all to display yet
   if (loading && allPosts.length === 0) return <LoadingSkeleton />;
 
   if (allPosts.length === 0) {
@@ -318,21 +200,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
   return (
     <div className="space-y-4 md:space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* Cache / loading badge */}
-        {loading ? (
-          <div className="flex items-center gap-1.5 text-xs text-yt-text-muted bg-yt-bg-tertiary px-3 py-1.5 rounded-full animate-pulse">
-            <RefreshCw size={12} className="text-yt-accent animate-spin" />
-            <span>{t(language, 'updating')}</span>
-          </div>
-        ) : cacheInfo ? (
-          <div className="flex items-center gap-1.5 text-xs text-yt-text-muted bg-yt-bg-tertiary px-3 py-1.5 rounded-full">
-            <Database size={12} className="text-yt-accent" />
-            <span>{t(language, 'cached', formatAge(cacheInfo.oldestFetchedAt, language))}</span>
-          </div>
-        ) : (
-          <div />
-        )}
-
+        <CacheInfo loading={loading} cacheInfo={cacheInfo} />
         <button
           onClick={() => loadChannels(true)}
           disabled={loading}
@@ -343,19 +211,8 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
         </button>
       </div>
 
-      {/* Post search */}
-      <div className="relative">
-        <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
-        <input
-          ref={searchRef}
-          value={postSearch}
-          onChange={e => setPostSearch(e.target.value)}
-          placeholder={`${t(language, 'searchPosts')} (s)`}
-          className={`w-full bg-yt-input text-yt-text rounded-lg py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-10 pl-3' : 'pl-10 pr-3'}`}
-        />
-      </div>
+      <PostSearch value={postSearch} onChange={setPostSearch} />
 
-      {/* Post count */}
       <p className="text-xs text-yt-text-muted">{t(language, 'showingPosts', filteredPosts.length)}</p>
 
       {filteredPosts.map((post, i) => (
@@ -369,15 +226,7 @@ export default function HomePage({ channels, refreshTrigger, onRefreshAll, empty
         />
       ))}
 
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 end-6 z-40 w-12 h-12 rounded-full bg-yt-accent text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-          aria-label={t(language, 'scrollToTop')}
-        >
-          <ChevronUp size={22} />
-        </button>
-      )}
+      <ScrollToTop />
     </div>
   );
 }
