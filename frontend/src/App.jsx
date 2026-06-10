@@ -3,6 +3,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Heart } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeProvider';
 import { useTheme } from './context/useTheme';
+import { TaskTimerProvider } from './context/TaskTimerContext';
 import api from './api';
 import Navbar from './components/Navbar';
 import ChannelSidebar from './components/ChannelSidebar';
@@ -11,6 +12,8 @@ import ChannelsPage from './components/ChannelsPage';
 import VideosPage from './components/VideosPage';
 import SettingsPage from './components/SettingsPage';
 import ExportPage from './components/ExportPage';
+import TaskTimerNotification from './components/TaskTimerNotification';
+import TaskTimerModal from './components/TaskTimerModal';
 import { t } from './i18n';
 
 const STORAGE_KEY = 'yt_feed_channels';
@@ -211,6 +214,7 @@ function AppContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showTimerModal, setShowTimerModal] = useState(false);
   const { language } = useTheme();
 
   const handleRefreshAll = useCallback(() => {
@@ -365,6 +369,7 @@ function AppContent() {
         sidebarOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onAddChannel={() => { setShowAddModal(true); setSidebarOpen(false); }}
+        onOpenTimer={() => { setShowTimerModal(true); setSidebarOpen(false); }}
         categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategory}
@@ -380,6 +385,11 @@ function AppContent() {
         onAdd={handleAddChannel}
         categories={categories}
       />
+      <TaskTimerNotification />
+      <TaskTimerModal
+        show={showTimerModal}
+        onClose={() => setShowTimerModal(false)}
+      />
     </div>
   );
 }
@@ -387,7 +397,9 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <TaskTimerProvider>
+        <AppContent />
+      </TaskTimerProvider>
     </ThemeProvider>
   );
 }

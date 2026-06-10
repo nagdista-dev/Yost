@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize, Video } from 'lucide-react';
+import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize, Video, Clock } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -34,7 +34,7 @@ function useFullscreen() {
   return { isFs, toggle };
 }
 
-export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, onClose, onAddChannel, categories, selectedCategory, onSelectCategory }) {
+export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, onClose, onAddChannel, onOpenTimer, categories, selectedCategory, onSelectCategory }) {
   const {
     theme, language, fontSize, updateSetting,
     showThemeQuickAccess, showLangQuickAccess, showFontSizeQuickAccess, showFullscreenQuickAccess
@@ -142,6 +142,14 @@ export default function ChannelSidebar({ activeTab, setActiveTab, sidebarOpen, o
 
         {/* Quick-access row */}
         <div className="flex items-center justify-center gap-1 px-3 pb-3 pt-1">
+          {/* Timer button */}
+          {onOpenTimer && (
+            <QuickButton
+              icon={Clock}
+              label={t(language, 'taskTimer')}
+              onClick={onOpenTimer}
+            />
+          )}
           {/* Theme toggle */}
           {showThemeQuickAccess && (
             <QuickButton

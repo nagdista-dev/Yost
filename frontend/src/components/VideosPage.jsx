@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo  } from 'react';
 import { ExternalLink, Eye, Film, LayoutGrid, List, Trophy, Heart, BarChart3, MessageCircle, ThumbsDown, Clock, TrendingUp } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { t } from '../i18n';
 
@@ -79,6 +80,7 @@ function RankBadge({ rank, label, value }) {
 }
 
 function VideoCard({ video, list, language, ranks }) {
+  const navigate = useNavigate()
   const r = ranks || {};
   const ratio = engagementRate(video.likes, video.views);
   const ago = timeAgo(video.published, language);
@@ -91,7 +93,7 @@ function VideoCard({ video, list, language, ranks }) {
       <div className="bg-yt-bg-card rounded-xl border border-yt-border shadow-sm hover:shadow-lg hover:border-yt-accent/20 transition-all duration-300 overflow-hidden flex gap-3 p-3 group">
         <div className="w-36 sm:w-44 h-20 sm:h-28 shrink-0 rounded-lg overflow-hidden bg-yt-bg-tertiary relative">
           {video.thumbnail ? (
-            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+            <img src={video.thumbnail} alt={video.title} onClick={()=>navigate(`${video.videoUrl}|| https://www.youtube.com/@${video._channelHandle}`)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-yt-text-muted/30"><Film size={24} /></div>
           )}
@@ -128,13 +130,7 @@ function VideoCard({ video, list, language, ranks }) {
               </span>
             )}
           </div>
-          <a
-            href={video.videoUrl || `https://www.youtube.com/@${video._channelHandle}`}
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-yt-accent/10 hover:bg-yt-accent/20 text-yt-accent text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] self-start mt-0.5"
-          >
-            <ExternalLink size={12} />
-          </a>
+        
         </div>
       </div>
     );

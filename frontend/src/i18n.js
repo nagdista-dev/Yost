@@ -111,6 +111,13 @@ const translations = {
     timeWeek: (n) => `${n}w ago`,
     timeMonth: (n) => `${n}mo ago`,
     timeYear: (n) => `${n}y ago`,
+    taskTimer: 'Task Timer',
+    taskName: 'Task name',
+    taskNamePlaceholder: 'My task',
+    taskDuration: 'Duration',
+    startTask: 'Start',
+    customMin: 'Custom',
+    minutes: 'min',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -225,6 +232,13 @@ const translations = {
     timeWeek: (n) => `منذ ${n} أسبوع`,
     timeMonth: (n) => `منذ ${n} شهر`,
     timeYear: (n) => `منذ ${n} سنة`,
+    taskTimer: 'مؤقت المهام',
+    taskName: 'اسم المهمة',
+    taskNamePlaceholder: 'مهمتي',
+    taskDuration: 'المدة',
+    startTask: 'بدء',
+    customMin: 'مخصص',
+    minutes: 'دقيقة',
   },
 };
 
