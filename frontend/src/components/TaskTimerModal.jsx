@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import { useTaskTimer } from '../context/TaskTimerContext';
 import { useTheme } from '../context/useTheme';
@@ -12,29 +12,49 @@ const PRESETS = [
   { label: '2h', value: 120 },
 ];
 
-export default function TaskTimerModal({ show, onClose }) {
+export default function TaskTimerModal({ show, onClose, editTask }) {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState(30);
   const [customMinutes, setCustomMinutes] = useState('');
-  const { addTask } = useTaskTimer();
+  const { addTask, updateTask } = useTaskTimer();
   const { language } = useTheme();
+  const isEditing = !!editTask;
 
-  function reset() {
-    setName('');
-    setDuration(30);
-    setCustomMinutes('');
-  }
+  useEffect(() => {
+    if (editTask) {
+      setName(editTask.name);
+      const durMinutes = Math.round(editTask.duration / 60000);
+      if (PRESETS.some(p => p.value === durMinutes)) {
+        setDuration(durMinutes);
+        setCustomMinutes('');
+      } else {
+        setDuration(30);
+        setCustomMinutes(String(durMinutes));
+      }
+    } else {
+      setName('');
+      setDuration(30);
+      setCustomMinutes('');
+    }
+  }, [editTask, show]);
 
-  function handleStart() {
+  function handleSubmit() {
     const finalDuration = customMinutes ? parseInt(customMinutes, 10) : duration;
     if (!finalDuration || finalDuration <= 0) return;
-    addTask(name.trim() || t(language, 'taskTimer'), finalDuration);
-    reset();
+    if (isEditing) {
+      updateTask(editTask.id, {
+        name: name.trim() || editTask.name,
+        endTime: Date.now() + finalDuration * 60 * 1000,
+        duration: finalDuration * 60 * 1000,
+      });
+    } else {
+      addTask(name.trim() || t(language, 'taskTimer'), finalDuration);
+    }
     onClose();
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter') handleStart();
+    if (e.key === 'Enter') handleSubmit();
   }
 
   if (!show) return null;
@@ -47,7 +67,9 @@ export default function TaskTimerModal({ show, onClose }) {
       >
         <div className="flex items-center gap-3 mb-5">
           <Clock size={20} className="text-yt-accent" />
-          <h2 className="text-yt-text text-lg font-bold">{t(language, 'taskTimer')}</h2>
+          <h2 className="text-yt-text text-lg font-bold">
+            {isEditing ? t(language, 'editTask') : t(language, 'taskTimer')}
+          </h2>
         </div>
 
         <div className="space-y-4">
@@ -102,16 +124,16 @@ export default function TaskTimerModal({ show, onClose }) {
 
         <div className="flex gap-2 justify-end mt-6">
           <button
-            onClick={() => { reset(); onClose(); }}
+            onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm font-medium text-yt-text-secondary hover:bg-yt-bg-tertiary transition"
           >
             {t(language, 'cancel')}
           </button>
           <button
-            onClick={handleStart}
+            onClick={handleSubmit}
             className="bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
-            {t(language, 'startTask')}
+            {isEditing ? t(language, 'save') : t(language, 'startTask')}
           </button>
         </div>
       </div>

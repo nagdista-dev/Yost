@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize, Video, Clock } from 'lucide-react';
+import { Home, Heart, Tv, Settings, Download, Sun, Moon, Plus, X, Tag, Languages, Type, Maximize, Minimize, Video, Clock, ListTodo } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -7,6 +7,7 @@ const tabs = [
   { id: 'home', icon: Home, labelKey: 'tabHome' },
   { id: 'videos', icon: Video, labelKey: 'tabVideos' },
   { id: 'favorites', icon: Heart, labelKey: 'tabFavorites' },
+  { id: 'timeline', icon: ListTodo, labelKey: 'timeline' },
   { id: 'channels', icon: Tv, labelKey: 'tabChannels' },
   { id: 'settings', icon: Settings, labelKey: 'tabSettings' },
   { id: 'export', icon: Download, labelKey: 'tabExport' },

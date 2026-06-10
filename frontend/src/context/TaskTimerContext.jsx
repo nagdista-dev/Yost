@@ -6,17 +6,33 @@ export function TaskTimerProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [completedTask, setCompletedTask] = useState(null);
   const manualRemoveRef = useRef(null);
+  const notificationTimeouts = useRef({});
 
   const addTask = useCallback((name, durationMinutes) => {
     const id = Date.now().toString();
     const endTime = Date.now() + durationMinutes * 60 * 1000;
-    setTasks(prev => [...prev, { id, name, endTime, duration: durationMinutes * 60 * 1000 }]);
+    setTasks(prev => [...prev, {
+      id, name, endTime,
+      duration: durationMinutes * 60 * 1000,
+      status: 'active',
+      createdAt: Date.now(),
+    }]);
     return id;
   }, []);
 
   const removeTask = useCallback((id) => {
     manualRemoveRef.current = id;
     setTasks(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const completeTask = useCallback((id) => {
+    setTasks(prev => prev.map(t =>
+      t.id === id ? { ...t, status: t.status === 'active' ? 'completed' : 'active' } : t
+    ));
+  }, []);
+
+  const updateTask = useCallback((id, updates) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
   }, []);
 
   const clearCompletedTask = useCallback(() => {
@@ -28,7 +44,7 @@ export function TaskTimerProvider({ children }) {
     const interval = setInterval(() => {
       const now = Date.now();
       setTasks(prev => {
-        const expired = prev.filter(t => t.endTime <= now);
+        const expired = prev.filter(t => t.status === 'active' && t.endTime <= now);
         if (expired.length > 0) {
           const completed = expired.find(t => t.id !== manualRemoveRef.current);
           if (completed) {
@@ -36,14 +52,30 @@ export function TaskTimerProvider({ children }) {
           }
         }
         manualRemoveRef.current = null;
-        return prev.filter(t => t.endTime > now);
+        return prev.map(t =>
+          t.status === 'active' && t.endTime <= now
+            ? { ...t, status: 'completed' }
+            : t
+        );
       });
     }, 1000);
     return () => clearInterval(interval);
   }, [tasks.length]);
 
+  const activeTasks = tasks.filter(t => t.status === 'active');
+  const allTasks = [...tasks].sort((a, b) => b.createdAt - a.createdAt);
+
   return (
-    <TaskTimerContext.Provider value={{ tasks, addTask, removeTask, completedTask, clearCompletedTask }}>
+    <TaskTimerContext.Provider value={{
+      tasks: activeTasks,
+      allTasks,
+      addTask,
+      removeTask,
+      completeTask,
+      updateTask,
+      completedTask,
+      clearCompletedTask,
+    }}>
       {children}
     </TaskTimerContext.Provider>
   );

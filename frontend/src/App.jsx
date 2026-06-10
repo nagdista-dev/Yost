@@ -14,6 +14,7 @@ import SettingsPage from './components/SettingsPage';
 import ExportPage from './components/ExportPage';
 import TaskTimerNotification from './components/TaskTimerNotification';
 import TaskTimerModal from './components/TaskTimerModal';
+import TaskTimeline from './components/TaskTimeline';
 import { t } from './i18n';
 
 const STORAGE_KEY = 'yt_feed_channels';
@@ -289,6 +290,7 @@ function AppContent() {
       case 'videos': return t(language, 'tabVideos');
       case 'favorites': return t(language, 'favoritesTitle');
       case 'channels': return t(language, 'channels');
+      case 'timeline': return t(language, 'timeline');
       case 'settings': return t(language, 'settingsTitle');
       case 'export': return t(language, 'exportTitle');
       default: return '';
@@ -336,6 +338,8 @@ function AppContent() {
             categories={categories}
           />
         );
+      case 'timeline':
+        return <TaskTimeline onOpenTimer={() => setShowTimerModal(true)} />;
       case 'settings':
         return <SettingsPage />;
       case 'export':
