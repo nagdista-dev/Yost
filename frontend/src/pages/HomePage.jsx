@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshCw, Database, ChevronUp, Search } from 'lucide-react';
-import PostCard from './PostCard';
-import LoadingSkeleton from './LoadingSkeleton';
+import PostCard from '../components/PostCard';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/useTheme';
 import api from '../api';

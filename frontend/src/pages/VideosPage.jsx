@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo  } from 'react';
 import { ExternalLink, Eye, Film, LayoutGrid, List, Trophy, Heart, BarChart3, MessageCircle, ThumbsDown, Clock, TrendingUp } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
-import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { t } from '../i18n';
 
@@ -80,7 +79,6 @@ function RankBadge({ rank, label, value }) {
 }
 
 function VideoCard({ video, list, language, ranks }) {
-  const navigate = useNavigate()
   const r = ranks || {};
   const ratio = engagementRate(video.likes, video.views);
   const ago = timeAgo(video.published, language);
@@ -93,7 +91,7 @@ function VideoCard({ video, list, language, ranks }) {
       <div className="bg-yt-bg-card rounded-xl border border-yt-border shadow-sm hover:shadow-lg hover:border-yt-accent/20 transition-all duration-300 overflow-hidden flex gap-3 p-3 group">
         <div className="w-36 sm:w-44 h-20 sm:h-28 shrink-0 rounded-lg overflow-hidden bg-yt-bg-tertiary relative">
           {video.thumbnail ? (
-            <img src={video.thumbnail} alt={video.title} onClick={()=>navigate(`${video.videoUrl}|| https://www.youtube.com/@${video._channelHandle}`)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+            <img src={video.thumbnail} alt={video.title} onClick={()=>window.open(video.videoUrl || `https://www.youtube.com/@${video._channelHandle}`)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-yt-text-muted/30"><Film size={24} /></div>
           )}
