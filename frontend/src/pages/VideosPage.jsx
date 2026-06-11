@@ -1,6 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Film, X, RefreshCw, LayoutGrid, List } from 'lucide-react';
+import { Film, X, RefreshCw, LayoutGrid, List, RotateCw } from 'lucide-react';
+import toast from 'react-hot-toast';
+import api from '../api';
 import { useTheme } from '../context/useTheme';
+import { t } from '../i18n';
+import VideoCard from '../components/VideoCard';
+import VideoSkeleton from '../components/VideoSkeleton';
+import VideoPlayerModal from '../components/VideoPlayerModal';
+import VideoFilters from '../components/VideoFilters';
+import useVideos from '../hooks/useVideos';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
 import VideoSkeleton from '../components/VideoSkeleton';
@@ -78,6 +86,14 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     onUpdateChannel(editing, { ...editing, name: editName.trim(), categories: cats });
     setEditing(null);
   };
+
+  async function populateEditName() {
+    if (!editing) return;
+    try {
+      const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: editing.handle } });
+      if (data.name) setEditName(data.name);
+    } catch {}
+  }
 
   const editAvailable = (categories || []).filter(c => c !== 'Unspecified' && !editCategories.includes(c));
 
@@ -218,14 +234,24 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
                 <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
                   {t(language, 'channelName')}
                 </label>
-                <input
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
-                  placeholder={t(language, 'channelName')}
-                  className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
+                    placeholder={t(language, 'channelName')}
+                    className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 pe-10 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={populateEditName}
+                    className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-yt-text-muted hover:text-yt-accent transition"
+                    title={t(language, 'populateName')}
+                  >
+                    <RotateCw size={16} />
+                  </button>
+                </div>
               </div>
 
               <div>
