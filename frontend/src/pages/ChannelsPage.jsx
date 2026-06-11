@@ -183,7 +183,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-yt-text text-sm md:text-base truncate">
-                              {ch.handle}
+                              {ch.name || ch.handle}
                             </span>
                             <button
                               onClick={() => setConfirmOpen(ch)}

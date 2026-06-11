@@ -91,7 +91,7 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditC
               className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
               onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
             >
-              {video._channelHandle}
+              {video._channelName || video._channelHandle}
             </p>
             <button
               onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
