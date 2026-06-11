@@ -1,18 +1,44 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
+
+const STORAGE_KEY = 'yt_videos_cache';
 
 function isLikelyLive(title) {
   if (!title) return false;
   return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
 }
 
+function cacheKey(channels) {
+  const handles = channels.map(c => (typeof c === 'string' ? c : c.handle).toLowerCase()).sort().join(',');
+  return handles;
+}
+
+function loadCached(channels) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (cached.key === cacheKey(channels)) {
+      return cached.data;
+    }
+  } catch {}
+  return null;
+}
+
+function saveCache(channels, data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ key: cacheKey(channels), data }));
+  } catch {}
+}
+
 export default function useVideos(channels, refreshTrigger = 0) {
   const { language } = useTheme();
-  const [videos, setVideos] = useState({});
-  const [loading, setLoading] = useState(true);
+  const initialData = useRef(loadCached(channels));
+  const [videos, setVideos] = useState(initialData.current || {});
+  const [loading, setLoading] = useState(!initialData.current);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
@@ -20,12 +46,16 @@ export default function useVideos(channels, refreshTrigger = 0) {
 
   const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
+  const hasCached = !!initialData.current;
+
   useEffect(() => {
     if (channels.length === 0) {
       setLoading(false);
       setProgress({ loaded: 0, total: 0 });
       return;
     }
+
+    if (hasCached && refreshTrigger === 0) return;
 
     let cancelled = false;
 
@@ -72,6 +102,7 @@ export default function useVideos(channels, refreshTrigger = 0) {
 
       if (!cancelled) {
         setVideos(results);
+        saveCache(channels, results);
         setLoading(false);
       }
     }
