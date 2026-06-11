@@ -114,7 +114,15 @@ function AppContent() {
         );
       }
       case 'videos':
-        return <VideosPage channels={channels} onChannelClick={(handle) => setChannelProfile(handle)} />;
+        return (
+          <VideosPage
+            channels={channels}
+            onChannelClick={(handle) => setChannelProfile(handle)}
+            onUpdateChannel={handleUpdateChannel}
+            onToggleFavorite={handleToggleFavorite}
+            categories={categories}
+          />
+        );
       case 'favorites': {
         const favChannels = channels.filter(c => c.favorite);
         return (

@@ -1,11 +1,11 @@
-import { Film, Play, Clock, Eye, Heart, TrendingUp } from 'lucide-react';
+import { Film, Play, Clock, Eye, Heart, TrendingUp, Edit2 } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import { formatViews } from '../utils/formatCount';
 import { engagementRate } from '../utils/timeAgo';
 import timeAgo, { formatDuration } from '../utils/timeAgo';
 
-export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
+export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditChannel }) {
   const { language } = useTheme();
   const ratio = engagementRate(video.likes, video.views);
   const ago = timeAgo(video.published, language);
@@ -82,12 +82,21 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
               {video.title || t(language, 'untitled')}
             </h3>
           </div>
-          <p
-            className="text-yt-text-muted text-xs truncate mt-1 cursor-pointer hover:text-yt-accent transition-colors"
-            onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
-          >
-            {video._channelHandle}
-          </p>
+          <div className="flex items-center gap-1 mt-1">
+            <p
+              className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
+              onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
+            >
+              {video._channelHandle}
+            </p>
+            <button
+              onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
+              className="p-0.5 rounded text-yt-text-muted opacity-0 group-hover:opacity-100 hover:text-yt-accent transition-all shrink-0"
+              title="Edit channel"
+            >
+              <Edit2 size={11} />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-yt-text-muted pt-1 border-t border-yt-border/30">

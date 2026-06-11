@@ -1,9 +1,10 @@
+import { Edit2 } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoThumbnail from './VideoThumbnail';
 import VideoStats from './VideoStats';
 
-export default function GridCard({ video, ranks, onPlay, onChannelClick }) {
+export default function GridCard({ video, ranks, onPlay, onChannelClick, onEditChannel }) {
   const { language } = useTheme();
   const rank = ranks?.viewsRank;
 
@@ -31,12 +32,21 @@ export default function GridCard({ video, ranks, onPlay, onChannelClick }) {
               {video.title || t(language, 'untitled')}
             </h3>
           </div>
-          <span
-            className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
-            onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
-          >
-            {video._channelHandle}
-          </span>
+          <div className="flex items-center gap-1">
+            <span
+              className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
+              onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
+            >
+              {video._channelHandle}
+            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
+              className="p-0.5 rounded text-yt-text-muted opacity-0 group-hover:opacity-100 hover:text-yt-accent transition-all"
+              title="Edit channel"
+            >
+              <Edit2 size={11} />
+            </button>
+          </div>
         </div>
 
         <div className="pt-1 border-t border-yt-border/30" />
