@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ListMusic, Trash2, ExternalLink, Play } from 'lucide-react';
+import { ListMusic, Trash2, ExternalLink, Play, Plus } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function PlaylistsPage({ playlists, onRemovePlaylist, onSelectPlaylist }) {
+export default function PlaylistsPage({ playlists, onRemovePlaylist, onSelectPlaylist, onAddPlaylist }) {
   const { language } = useTheme();
 
   if (playlists.length === 0) {
@@ -14,12 +14,28 @@ export default function PlaylistsPage({ playlists, onRemovePlaylist, onSelectPla
         </div>
         <p className="text-lg" style={{ fontSize: 'var(--font-size-lg)' }}>{t(language, 'noPlaylists')}</p>
         <p className="text-sm mt-1">{t(language, 'noPlaylistsHint')}</p>
+        <button
+          onClick={onAddPlaylist}
+          className="mt-4 inline-flex items-center gap-1.5 bg-yt-accent hover:bg-yt-accent-hover text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-sm"
+        >
+          <Plus size={18} />
+          {t(language, 'addPlaylist')}
+        </button>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      <button
+        onClick={onAddPlaylist}
+        className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-yt-border/40 text-yt-text-muted hover:text-yt-accent hover:border-yt-accent/40 transition bg-yt-bg-card/30 hover:bg-yt-bg-card cursor-pointer"
+      >
+        <div className="w-10 h-10 rounded-xl bg-yt-accent/10 flex items-center justify-center shrink-0">
+          <Plus size={18} className="text-yt-accent" />
+        </div>
+        <span className="text-sm font-medium">{t(language, 'addPlaylist')}</span>
+      </button>
       {playlists.map(pl => (
         <div
           key={pl.playlistId}

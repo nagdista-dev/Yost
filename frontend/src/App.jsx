@@ -179,6 +179,7 @@ function AppContent() {
             playlists={playlists}
             onRemovePlaylist={handleRemovePlaylist}
             onSelectPlaylist={(pl) => setPlaylistProfile(pl)}
+            onAddPlaylist={() => setShowAddPlaylistModal(true)}
           />
         );
       case 'settings':
