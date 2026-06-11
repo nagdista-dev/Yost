@@ -79,6 +79,55 @@ async function fetchDislikes(videoId) {
   return { dislikes: '', likes: '' };
 }
 
+async function findChannelId(html) {
+  const patterns = [
+    /channel_id=(UC[\w-]+)/,
+    /"channelId"\s*:\s*"(UC[\w-]+)"/,
+    /\/channel\/(UC[\w-]+)/,
+    /"externalId"\s*:\s*"(UC[\w-]+)"/,
+    /"browseId"\s*:\s*"(UC[\w-]+)"/,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m) return m[1];
+  }
+  const ytData = html.match(/ytInitialData\s*=\s*({[\s\S]*?});\s*<\/script>/);
+  if (ytData) {
+    try {
+      const data = JSON.parse(ytData[1]);
+      const id = data?.metadata?.channelMetadataRenderer?.externalId
+        || data?.header?.c4TabbedHeaderRenderer?.channelId
+        || data?.microformat?.microformatDataRenderer?.externalId;
+      if (id) return id;
+    } catch {}
+  }
+  return null;
+}
+
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+};
+
+async function fetchWithRetry(url, options, retries = 1) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const rsp = await fetch(url, options);
+      return rsp;
+    } catch (err) {
+      if (i < retries) {
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 async function scrapeLatestVideo(handle) {
   const cacheKey = handle.toLowerCase();
   const cached = videoCache.get(cacheKey);
@@ -87,9 +136,9 @@ async function scrapeLatestVideo(handle) {
   }
 
   try {
-    const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
-      signal: AbortSignal.timeout(20000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    const htmlRsp = await fetchWithRetry(`https://www.youtube.com/@${handle}`, {
+      signal: AbortSignal.timeout(25000),
+      headers: BROWSER_HEADERS,
     });
 
     if (!htmlRsp.ok) {
@@ -99,20 +148,18 @@ async function scrapeLatestVideo(handle) {
 
     const html = await htmlRsp.text();
 
-    const idMatch = html.match(/channel_id=(UC[\w-]+)/);
-    if (!idMatch) {
-      console.warn(`[video] could not find channel ID in HTML for @${handle}`);
+    const channelId = await findChannelId(html);
+    if (!channelId) {
+      console.warn(`[video] could not find channel ID in HTML for @${handle} (${html.length} bytes)`);
       return null;
     }
-
-    const channelId = idMatch[1];
 
     console.log(`[video] found channel ID ${channelId} for @${handle}`);
 
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const rssRsp = await fetch(rssUrl, {
+    const rssRsp = await fetchWithRetry(rssUrl, {
       signal: AbortSignal.timeout(15000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      headers: BROWSER_HEADERS,
     });
 
     if (!rssRsp.ok) {
@@ -186,6 +233,8 @@ async function scrapeLatestVideo(handle) {
 }
 
 async function scrapeChannelVideos(handle) {
+
+async function scrapeChannelVideos(handle) {
   const cacheKey = handle.toLowerCase();
 
   const cached = channelVideoCache.get(cacheKey);
@@ -204,15 +253,15 @@ async function scrapeChannelVideos(handle) {
     console.log(`[channel] using cached channelId ${channelId} for @${handle}`);
   } else {
     try {
-      const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
-        signal: AbortSignal.timeout(20000),
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      const htmlRsp = await fetchWithRetry(`https://www.youtube.com/@${handle}`, {
+        signal: AbortSignal.timeout(25000),
+        headers: BROWSER_HEADERS,
       });
       if (htmlRsp.ok) {
         const html = await htmlRsp.text();
-        const idMatch = html.match(/channel_id=(UC[\w-]+)/);
-        if (idMatch) {
-          channelId = idMatch[1];
+        const id = await findChannelId(html);
+        if (id) {
+          channelId = id;
           chIdCache.set(cacheKey, { channelId });
         }
       }
@@ -225,9 +274,9 @@ async function scrapeChannelVideos(handle) {
 
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const rssRsp = await fetch(rssUrl, {
+    const rssRsp = await fetchWithRetry(rssUrl, {
       signal: AbortSignal.timeout(15000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      headers: BROWSER_HEADERS,
     });
     if (!rssRsp.ok) {
       console.warn(`[channel] RSS feed returned ${rssRsp.status} for @${handle}`);
