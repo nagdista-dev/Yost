@@ -9,6 +9,7 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import HomePage from './pages/HomePage';
 import ChannelsPage from './pages/ChannelsPage';
 import VideosPage from './pages/VideosPage';
+import ChannelPage from './pages/ChannelPage';
 import SettingsPage from './pages/SettingsPage';
 import ExportPage from './pages/ExportPage';
 import useChannels from './hooks/useChannels';
@@ -28,6 +29,7 @@ function AppContent() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [channelProfile, setChannelProfile] = useState(null);
   const { language } = useTheme();
 
   const handleSetActiveTab = useCallback((tab) => {
@@ -52,6 +54,7 @@ function AppContent() {
         handleSetActiveTab('channels');
       } else if (e.key === 'Escape') {
         setShowShortcuts(false);
+        setChannelProfile(null);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
@@ -80,6 +83,9 @@ function AppContent() {
   };
 
   const pageContent = () => {
+    if (channelProfile) {
+      return <ChannelPage channelHandle={channelProfile} onBack={() => setChannelProfile(null)} />;
+    }
     switch (activeTab) {
       case 'home': {
         const filtered = selectedCategory
@@ -98,7 +104,7 @@ function AppContent() {
         );
       }
       case 'videos':
-        return <VideosPage channels={channels} />;
+        return <VideosPage channels={channels} onChannelClick={(handle) => setChannelProfile(handle)} />;
       case 'favorites': {
         const favChannels = channels.filter(c => c.favorite);
         return (

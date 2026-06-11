@@ -5,7 +5,7 @@ import { formatViews } from '../utils/formatCount';
 import { engagementRate } from '../utils/timeAgo';
 import timeAgo, { formatDuration } from '../utils/timeAgo';
 
-export default function ListCard({ video, ranks, onPlay }) {
+export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
   const { language } = useTheme();
   const ratio = engagementRate(video.likes, video.views);
   const ago = timeAgo(video.published, language);
@@ -63,7 +63,10 @@ export default function ListCard({ video, ranks, onPlay }) {
           <h3 className="text-yt-text font-semibold text-sm leading-snug line-clamp-1 group-hover:text-yt-accent transition-colors">
             {video.title || t(language, 'untitled')}
           </h3>
-          <p className="text-yt-text-muted text-xs truncate mt-1">
+          <p
+            className="text-yt-text-muted text-xs truncate mt-1 cursor-pointer hover:text-yt-accent transition-colors"
+            onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
+          >
             {video._channelHandle}
           </p>
         </div>

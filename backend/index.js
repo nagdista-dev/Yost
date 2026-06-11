@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { loadCacheFromDisk, getCached, setCache, CACHE_TTL_MS } = require('./src/cache');
 const { backgroundScrape } = require('./src/channelScraper');
-const { scrapeLatestVideo } = require('./src/videoScraper');
+const { scrapeLatestVideo, scrapeChannelVideos } = require('./src/videoScraper');
 const { scrapePostComments, commentsCache } = require('./src/commentScraper');
 const { getActiveScrapes, getQueueLength } = require('./src/concurrency');
 
@@ -61,6 +61,20 @@ app.get('/api/latest-video', async (req, res) => {
     res.json({ video });
   } catch (err) {
     console.error(`[video] failed for @${handle}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/channel-videos', async (req, res) => {
+  let handle = req.query.channelHandle || req.query.handle;
+  if (!handle) return res.status(400).json({ error: 'Channel handle is required' });
+  if (handle.startsWith('@')) handle = handle.slice(1);
+
+  try {
+    const data = await scrapeChannelVideos(handle);
+    res.json(data || { videos: [] });
+  } catch (err) {
+    console.error(`[channel-videos] failed for @${handle}:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });

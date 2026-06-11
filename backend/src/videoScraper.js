@@ -120,4 +120,87 @@ async function scrapeLatestVideo(handle) {
   }
 }
 
-module.exports = { scrapeLatestVideo };
+async function scrapeChannelVideos(handle) {
+  try {
+    const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
+      signal: AbortSignal.timeout(20000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+
+    if (!htmlRsp.ok) {
+      console.warn(`[channel] page returned ${htmlRsp.status} for @${handle}`);
+      return null;
+    }
+
+    const html = await htmlRsp.text();
+
+    const idMatch = html.match(/channel_id=(UC[\w-]+)/);
+    if (!idMatch) {
+      console.warn(`[channel] could not find channel ID for @${handle}`);
+      return null;
+    }
+
+    const channelId = idMatch[1];
+    console.log(`[channel] found channel ID ${channelId} for @${handle}`);
+
+    let avatar = '';
+    const avatarMatch = html.match(/"avatar"\s*:\s*\[\s*{"url"\s*:\s*"([^"]+)"/);
+    if (avatarMatch) {
+      avatar = avatarMatch[1].replace(/\\u002F/g, '/');
+    }
+
+    const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const rssRsp = await fetch(rssUrl, {
+      signal: AbortSignal.timeout(15000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+
+    if (!rssRsp.ok) {
+      console.warn(`[channel] RSS feed returned ${rssRsp.status} for @${handle}`);
+      return null;
+    }
+
+    const xml = await rssRsp.text();
+
+    const channelNameMatch = xml.match(/<title[^>]*>([^<]+)<\/title>/);
+    const channelName = channelNameMatch ? channelNameMatch[1].trim() : handle;
+
+    const entryRegex = /<entry[^>]*>([\s\S]*?)<\/entry>/g;
+    const entries = [];
+    let entryMatch;
+    while ((entryMatch = entryRegex.exec(xml)) !== null && entries.length < 15) {
+      const entryXml = entryMatch[1];
+      const videoIdMatch = entryXml.match(/<[^:>]*:?videoId[^>]*>([^<]+)<\/[^>]*:?videoId[^>]*>/);
+      const titleMatch = entryXml.match(/<title[^>]*>([^<]+)<\/title>/);
+      const publishedMatch = entryXml.match(/<published[^>]*>([^<]+)<\/published>/);
+      const viewsMatch = entryXml.match(/media:statistics\s+views="(\d+)"/);
+
+      const videoId = videoIdMatch ? videoIdMatch[1].trim() : '';
+      if (!videoId) continue;
+
+      entries.push({
+        videoId,
+        title: titleMatch ? titleMatch[1].trim() : '',
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        published: publishedMatch ? publishedMatch[1].trim() : '',
+        views: viewsMatch ? viewsMatch[1] : '',
+        videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+      });
+    }
+
+    console.log(`[channel] found ${entries.length} videos for @${handle}`);
+
+    return {
+      channelId,
+      channelName,
+      channelHandle: `@${handle}`,
+      avatar,
+      videos: entries,
+    };
+  } catch (e) {
+    console.warn(`[channel] error for @${handle}: ${e.message}`);
+    return null;
+  }
+}
+
+module.exports = { scrapeLatestVideo, scrapeChannelVideos };

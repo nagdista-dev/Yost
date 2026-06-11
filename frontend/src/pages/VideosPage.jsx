@@ -8,7 +8,7 @@ import VideoPlayerModal from '../components/VideoPlayerModal';
 import VideoFilters from '../components/VideoFilters';
 import useVideos from '../hooks/useVideos';
 
-export default function VideosPage({ channels }) {
+export default function VideosPage({ channels, onChannelClick }) {
   const { language } = useTheme();
   const [listMode, setListMode] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState(null);
@@ -75,6 +75,7 @@ export default function VideosPage({ channels }) {
                 list={listMode}
                 ranks={{ viewsRank: video._viewsRank, likesRank: video._likesRank }}
                 onPlay={handlePlay}
+                onChannelClick={onChannelClick}
               />
             ))}
           </div>

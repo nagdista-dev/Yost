@@ -3,7 +3,7 @@ import { t } from '../i18n';
 import VideoThumbnail from './VideoThumbnail';
 import VideoStats from './VideoStats';
 
-export default function GridCard({ video, ranks, onPlay }) {
+export default function GridCard({ video, ranks, onPlay, onChannelClick }) {
   const { language } = useTheme();
   const rank = ranks?.viewsRank;
 
@@ -16,7 +16,10 @@ export default function GridCard({ video, ranks, onPlay }) {
           <h3 className="text-yt-text font-semibold text-sm leading-snug line-clamp-2 group-hover:text-yt-accent transition-colors duration-200">
             {video.title || t(language, 'untitled')}
           </h3>
-          <span className="text-yt-text-muted text-xs truncate">
+          <span
+            className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
+            onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
+          >
             {video._channelHandle}
           </span>
         </div>
