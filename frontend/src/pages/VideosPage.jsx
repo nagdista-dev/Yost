@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Film, Search, X, RefreshCw } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Film, X, RefreshCw } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
@@ -12,7 +12,6 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
   const { language } = useTheme();
   const [listMode, setListMode] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState(null);
-  const [search, setSearch] = useState('');
 
   const [editing, setEditing] = useState(null);
   const [editName, setEditName] = useState('');
@@ -82,15 +81,6 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
 
   const editAvailable = (categories || []).filter(c => c !== 'Unspecified' && !editCategories.includes(c));
 
-  const filteredList = useMemo(() => {
-    if (!search) return videoList;
-    const q = search.toLowerCase();
-    return videoList.filter(v =>
-      (v.title || '').toLowerCase().includes(q) ||
-      (v._channelName || '').toLowerCase().includes(q)
-    );
-  }, [videoList, search]);
-
   if (channels.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[40vh] text-yt-text-muted">
@@ -103,14 +93,9 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
 
   return (
     <div className="space-y-4 md:space-y-5">
-      <div className="sticky top-20 z-30 bg-yt-bg md:bg-yt-bg-card md:rounded-xl md:border md:border-yt-border/50 md:shadow-sm">
-        <div className="px-3 md:px-5 py-2 md:pt-5 md:pb-4">
-          <div className="hidden md:flex items-center gap-2 mb-4">
-            <div className="w-1 h-5 rounded-full bg-yt-accent shrink-0" />
-            <h2 className="text-yt-text font-bold text-sm">{t(language, 'tabVideos')}</h2>
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-3">
+      <div className="sticky top-20 z-30 bg-yt-bg">
+        <div className="px-2 md:px-3 py-1.5">
+          <div className="flex items-center gap-1 md:gap-2">
             <div className="flex-1 min-w-0">
               <VideoFilters
                 allCategories={allCategories}
@@ -131,30 +116,11 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             <button
               onClick={onRefreshAll}
               disabled={loading}
-              className="hidden md:inline-flex shrink-0 p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition disabled:opacity-40"
+              className="shrink-0 p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition disabled:opacity-40"
               title={t(language, 'refreshVideos')}
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
-          </div>
-
-          <div className="hidden md:block mt-4 relative">
-            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by video title or channel name..."
-              className="w-full ps-9 pe-8 py-2.5 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/30 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent focus:border-yt-accent/30 transition-all placeholder-yt-text-muted/60"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute end-2 top-1/2 -translate-y-1/2 text-yt-text-muted hover:text-yt-text p-0.5 rounded transition-colors"
-              >
-                <X size={14} />
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -171,13 +137,13 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             ))}
           </div>
         </>
-      ) : filteredList.length === 0 ? (
+      ) : videoList.length === 0 ? (
         <div className="text-center text-yt-text-muted py-20">
           <div className="w-16 h-16 rounded-2xl bg-yt-bg-tertiary/50 flex items-center justify-center mx-auto mb-4">
             <Film size={28} className="text-yt-text-muted/50" />
           </div>
           <p className="text-base" style={{ fontSize: 'var(--font-size-lg)' }}>
-            {search ? 'No videos match your search.' : t(language, 'noVideos')}
+            {t(language, 'noVideos')}
           </p>
         </div>
       ) : (
@@ -185,10 +151,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
           <div className="flex items-center gap-2 px-1 py-2.5">
             <div className="h-px flex-1 bg-yt-border/20" />
             <p className="text-xs text-yt-text-muted/70 font-medium whitespace-nowrap">
-              {search
-                ? `${filteredList.length} of ${videoList.length} videos`
-                : t(language, 'showingVideos', filteredList.length)
-              }
+              {t(language, 'showingVideos', videoList.length)}
               {activeFilterCount > 0 && (
                 <span className="ms-1.5 text-yt-accent/70">· {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active</span>
               )}
@@ -196,7 +159,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             <div className="h-px flex-1 bg-yt-border/20" />
           </div>
           <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
-            {filteredList.map(video => (
+            {videoList.map(video => (
               <VideoCard
                 key={video.videoId}
                 video={video}

@@ -3,14 +3,21 @@ const channelVideoCache = new Map();
 const chIdCache = new Map();
 const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
 
+function isLiveFromTitle(title) {
+  if (!title) return false;
+  return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
+}
+
 function parseRssStats(entryXml) {
   const viewsM = entryXml.match(/media:statistics\s+views="(\d+)"/i);
   const likesM = entryXml.match(/media:statistics\s+likes="(\d+)"/i);
   const commentsM = entryXml.match(/media:statistics\s+comments="(\d+)"/i);
+  const durationM = entryXml.match(/media:content[^>]*\bduration="(\d+)"/i);
   return {
     views: viewsM ? viewsM[1] : null,
     likes: likesM ? likesM[1] : null,
     comments: commentsM ? commentsM[1] : null,
+    duration: durationM ? durationM[1] : null,
   };
 }
 
@@ -142,18 +149,15 @@ async function scrapeLatestVideo(handle) {
     let likes = rssStats.likes || '';
     let comments = rssStats.comments || '';
     let dislikes = '';
-    let videoLength = '';
-    let isLive = false;
+    let videoLength = rssStats.duration || '';
+    let isLive = isLiveFromTitle(title);
 
-    const needsWatchPage = !rssStats.views || !rssStats.likes || !rssStats.comments;
-    if (needsWatchPage) {
-      const wp = await scrapeWatchPage(videoId);
-      if (!views && wp.views) views = wp.views;
-      if (!likes && wp.likes) likes = wp.likes;
-      if (!comments && wp.comments) comments = wp.comments;
-      if (!videoLength && wp.length) videoLength = wp.length;
-      if (wp.isLive) isLive = true;
-    }
+    const wp = await scrapeWatchPage(videoId);
+    if (!views && wp.views) views = wp.views;
+    if (!likes && wp.likes) likes = wp.likes;
+    if (!comments && wp.comments) comments = wp.comments;
+    if (!videoLength && wp.length) videoLength = wp.length;
+    if (wp.isLive) isLive = true;
 
     const ryd = await fetchDislikes(videoId);
     dislikes = ryd.dislikes;
@@ -255,8 +259,8 @@ async function scrapeChannelVideos(handle) {
         likes: rssStats.likes || '',
         comments: rssStats.comments || '',
         dislikes: '',
-        length: '',
-        isLive: false,
+        length: rssStats.duration || '',
+        isLive: isLiveFromTitle(titleM ? titleM[1].trim() : ''),
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
       });
     }
@@ -266,7 +270,7 @@ async function scrapeChannelVideos(handle) {
 
   console.log(`[channel] found ${entries.length} videos for @${handle}`);
 
-  const needsScraping = entries.filter(e => !e.likes || !e.comments);
+  const needsScraping = entries;
   if (needsScraping.length > 0) {
     const results = await Promise.allSettled(
       needsScraping.map(e => scrapeWatchPage(e.videoId))
