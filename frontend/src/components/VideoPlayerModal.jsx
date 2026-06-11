@@ -76,6 +76,9 @@ export default function VideoPlayerModal({ videoId, onClose }) {
 
   function openAtTime() {
     const t = Math.floor(time);
+    if (playerRef.current && playerRef.current.stopVideo) {
+      playerRef.current.stopVideo();
+    }
     window.open(
       `https://www.youtube.com/watch?v=${videoId}&t=${t}s`,
       '_blank'
