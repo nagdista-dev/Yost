@@ -9,12 +9,6 @@ import VideoSkeleton from '../components/VideoSkeleton';
 import VideoPlayerModal from '../components/VideoPlayerModal';
 import VideoFilters from '../components/VideoFilters';
 import useVideos from '../hooks/useVideos';
-import { t } from '../i18n';
-import VideoCard from '../components/VideoCard';
-import VideoSkeleton from '../components/VideoSkeleton';
-import VideoPlayerModal from '../components/VideoPlayerModal';
-import VideoFilters from '../components/VideoFilters';
-import useVideos from '../hooks/useVideos';
 
 export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll }) {
   const { language } = useTheme();
