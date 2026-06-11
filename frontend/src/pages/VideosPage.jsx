@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Film, X, RefreshCw, LayoutGrid, List, RotateCw } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Film, X, RefreshCw, LayoutGrid, List, RotateCw, Shuffle, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useTheme } from '../context/useTheme';
@@ -10,10 +10,11 @@ import VideoPlayerModal from '../components/VideoPlayerModal';
 import VideoFilters from '../components/VideoFilters';
 import useVideos from '../hooks/useVideos';
 
-export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll }) {
+export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll, onSaveVideo, isVideoSaved }) {
   const { language } = useTheme();
   const [listMode, setListMode] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const [editing, setEditing] = useState(null);
   const [editName, setEditName] = useState('');
@@ -26,7 +27,25 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     categoryFilter, setCategoryFilter,
     sortBy, setSortBy,
     liveFilter, setLiveFilter,
+    searchText, setSearchText,
+    ageFilter, setAgeFilter,
   } = useVideos(channels, refreshTrigger);
+
+  const favoritedHandles = useMemo(() => {
+    const set = new Set();
+    channels.forEach(c => { if (c.favorite) set.add(c.handle); });
+    return set;
+  }, [channels]);
+
+  const displayList = useMemo(() => {
+    if (!favoritesOnly) return videoList;
+    return videoList.filter(v => favoritedHandles.has(v._channelHandle));
+  }, [videoList, favoritesOnly, favoritedHandles]);
+
+  const surpriseVideo = useMemo(() => {
+    if (displayList.length === 0) return null;
+    return displayList[Math.floor(Math.random() * displayList.length)];
+  }, [displayList]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -99,7 +118,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     );
   }
 
-  const activeFilterCount = [categoryFilter, liveFilter].filter(Boolean).length;
+  const activeFilterCount = [categoryFilter, liveFilter, searchText, ageFilter !== 'all', favoritesOnly].filter(Boolean).length;
 
   return (
     <div className="space-y-4 md:space-y-5">
@@ -117,8 +136,32 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
                 setListMode={setListMode}
                 liveFilter={liveFilter}
                 setLiveFilter={setLiveFilter}
+                searchText={searchText}
+                setSearchText={setSearchText}
+                ageFilter={ageFilter}
+                setAgeFilter={setAgeFilter}
               />
             </div>
+            {surpriseVideo && !loading && (
+              <button
+                onClick={() => setPlayingVideoId(surpriseVideo.videoId)}
+                className="shrink-0 p-2 rounded-lg border border-yt-accent/30 text-yt-accent hover:bg-yt-accent/10 transition"
+                title={t(language, 'surpriseMe')}
+              >
+                <Shuffle size={16} />
+              </button>
+            )}
+            <button
+              onClick={() => setFavoritesOnly(!favoritesOnly)}
+              className={`shrink-0 p-2 rounded-lg border transition ${
+                favoritesOnly
+                  ? 'border-yellow-500/50 text-yellow-500 bg-yellow-500/10'
+                  : 'border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50'
+              }`}
+              title={t(language, 'favoritesOnly')}
+            >
+              <Star size={16} fill={favoritesOnly ? 'currentColor' : 'none'} />
+            </button>
             <button
               onClick={onRefreshAll}
               disabled={loading}
@@ -163,7 +206,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             ))}
           </div>
         </>
-      ) : videoList.length === 0 ? (
+      ) : displayList.length === 0 ? (
         <div className="text-center text-yt-text-muted py-20">
           <div className="w-16 h-16 rounded-2xl bg-yt-bg-tertiary/50 flex items-center justify-center mx-auto mb-4">
             <Film size={28} className="text-yt-text-muted/50" />
@@ -177,7 +220,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
           <div className="flex items-center gap-2 px-1 py-2.5">
             <div className="h-px flex-1 bg-yt-border/20" />
             <p className="text-xs text-yt-text-muted/70 font-medium whitespace-nowrap">
-              {t(language, 'showingVideos', videoList.length)}
+              {t(language, 'showingVideos', displayList.length)}
               {activeFilterCount > 0 && (
                 <span className="ms-1.5 text-yt-accent/70">· {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active</span>
               )}
@@ -185,7 +228,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             <div className="h-px flex-1 bg-yt-border/20" />
           </div>
           <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
-            {videoList.map(video => (
+            {displayList.map(video => (
               <VideoCard
                 key={video.videoId || video._channelHandle}
                 video={video}
@@ -194,6 +237,8 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
                 onPlay={handlePlay}
                 onChannelClick={onChannelClick}
                 onEditChannel={handleEditChannel}
+                onSave={onSaveVideo}
+                isSaved={isVideoSaved}
               />
             ))}
           </div>

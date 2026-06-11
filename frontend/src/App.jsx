@@ -15,8 +15,10 @@ import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistPage from './pages/PlaylistPage';
 import SettingsPage from './pages/SettingsPage';
 import ExportPage from './pages/ExportPage';
+import SavedVideosPage from './pages/SavedVideosPage';
 import useChannels from './hooks/useChannels';
 import usePlaylists from './hooks/usePlaylists';
+import useSavedVideos from './hooks/useSavedVideos';
 import { getStartPage } from './components/StartPageSelector';
 import FloatingAddButton from './components/FloatingAddButton';
 import { t } from './i18n';
@@ -30,6 +32,7 @@ function AppContent() {
   const {
     playlists, handleAddPlaylist, handleRemovePlaylist,
   } = usePlaylists();
+  const { saved, isSaved, toggleSave } = useSavedVideos();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState(getStartPage);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -96,6 +99,7 @@ function AppContent() {
       case 'home': return t(language, 'appTitle');
       case 'videos': return t(language, 'tabVideos');
       case 'playlists': return t(language, 'tabPlaylists');
+      case 'saved': return t(language, 'savedVideos');
       case 'favorites': return t(language, 'favoritesTitle');
       case 'channels': return t(language, 'channels');
       case 'settings': return t(language, 'settingsTitle');
@@ -152,6 +156,15 @@ function AppContent() {
             categories={categories}
             refreshTrigger={refreshTrigger}
             onRefreshAll={handleRefreshAll}
+            onSaveVideo={toggleSave}
+            isVideoSaved={isSaved}
+          />
+        );
+      case 'saved':
+        return (
+          <SavedVideosPage
+            saved={saved}
+            onChannelClick={(handle) => setChannelProfile(handle)}
           />
         );
       case 'favorites': {

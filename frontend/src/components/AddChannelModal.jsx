@@ -97,9 +97,18 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
     const handle = normalizeHandle(input);
     if (!handle) return;
     setResolving(true);
+    const clean = handle.replace('@', '');
     try {
       const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: handle } });
-      if (data.name) setName(data.name);
+      if (data.name) { setName(data.name); setResolving(false); return; }
+    } catch {}
+    try {
+      const rsp = await fetch(`/yt/@${clean}`, { signal: AbortSignal.timeout(10000) });
+      if (rsp.ok) {
+        const html = await rsp.text();
+        const m = html.match(/<title[^>]*>([^<]+)<\/title>/);
+        if (m) setName(m[1].replace(/ - YouTube$/, '').trim());
+      }
     } catch {}
     setResolving(false);
   }
@@ -134,9 +143,18 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
                   const handle = normalizeHandle(val);
                   if (!handle) return;
                   setResolving(true);
+                  const clean = handle.replace('@', '');
                   try {
                     const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: handle } });
-                    if (data.name) setName(data.name);
+                    if (data.name) { setName(data.name); setResolving(false); return; }
+                  } catch {}
+                  try {
+                    const rsp = await fetch(`/yt/@${clean}`, { signal: AbortSignal.timeout(10000) });
+                    if (rsp.ok) {
+                      const html = await rsp.text();
+                      const m = html.match(/<title[^>]*>([^<]+)<\/title>/);
+                      if (m) setName(m[1].replace(/ - YouTube$/, '').trim());
+                    }
                   } catch {}
                   setResolving(false);
                 }, 600);

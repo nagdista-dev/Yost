@@ -10,6 +10,11 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
+      "/yt": {
+        target: "https://www.youtube.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/yt/, ""),
+      },
     },
   },
 });

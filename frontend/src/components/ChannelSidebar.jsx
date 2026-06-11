@@ -1,4 +1,4 @@
-import { X, Home, Video, Heart, Tv, Settings, Download, ListMusic } from 'lucide-react';
+import { X, Home, Video, Heart, Tv, Settings, Download, ListMusic, Bookmark } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import TabButton from './TabButton';
@@ -8,6 +8,7 @@ import SidebarFooter from './SidebarFooter';
 const tabs = [
   { id: 'home', icon: Home, labelKey: 'tabHome' },
   { id: 'videos', icon: Video, labelKey: 'tabVideos' },
+  { id: 'saved', icon: Bookmark, labelKey: 'tabSaved' },
   { id: 'playlists', icon: ListMusic, labelKey: 'tabPlaylists' },
   { id: 'favorites', icon: Heart, labelKey: 'tabFavorites' },
   { id: 'channels', icon: Tv, labelKey: 'tabChannels' },

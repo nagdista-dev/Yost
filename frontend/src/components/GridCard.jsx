@@ -1,10 +1,10 @@
-import { Edit2 } from 'lucide-react';
+import { Edit2, Bookmark } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoThumbnail from './VideoThumbnail';
 import VideoStats from './VideoStats';
 
-export default function GridCard({ video, ranks, onPlay, onChannelClick, onEditChannel }) {
+export default function GridCard({ video, ranks, onPlay, onChannelClick, onEditChannel, onSave, isSaved }) {
   const { language } = useTheme();
 
   if (video._noVideo) {
@@ -68,6 +68,19 @@ export default function GridCard({ video, ranks, onPlay, onChannelClick, onEditC
             >
               {video._channelName || video._channelHandle}
             </span>
+            {onSave && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSave(video); }}
+                className={`p-1 rounded-lg transition shrink-0 ${
+                  isSaved?.(video.videoId)
+                    ? 'text-yellow-500 hover:text-yellow-600'
+                    : 'text-yt-text-muted/60 opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+                }`}
+                title={isSaved?.(video.videoId) ? t(language, 'unsaveVideo') : t(language, 'saveVideo')}
+              >
+                <Bookmark size={12} fill={isSaved?.(video.videoId) ? 'currentColor' : 'none'} />
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
               className="p-1 rounded-lg text-yt-text-muted/60 opacity-0 group-hover:opacity-100 hover:bg-yt-accent/10 hover:text-yt-accent transition-all shrink-0"
