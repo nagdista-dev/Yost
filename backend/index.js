@@ -51,6 +51,26 @@ app.get('/api/cache', (_req, res) => {
   res.json({ ttlMs: CACHE_TTL_MS, entries, activeScrapes: getActiveScrapes(), queued: getQueueLength() });
 });
 
+app.get('/api/resolve-channel', async (req, res) => {
+  let handle = req.query.channelHandle || req.query.handle;
+  if (!handle) return res.status(400).json({ error: 'Channel handle is required' });
+  if (handle.startsWith('@')) handle = handle.slice(1);
+
+  try {
+    const htmlRsp = await fetch(`https://www.youtube.com/@${handle}`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (!htmlRsp.ok) return res.json({ name: '' });
+    const html = await htmlRsp.text();
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/);
+    const name = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
+    res.json({ name });
+  } catch {
+    res.json({ name: '' });
+  }
+});
+
 app.get('/api/latest-video', async (req, res) => {
   let handle = req.query.channelHandle || req.query.handle;
   if (!handle) return res.status(400).json({ error: 'Channel handle is required' });

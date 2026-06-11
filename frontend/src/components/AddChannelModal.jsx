@@ -1,16 +1,34 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Heart, X } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
+import api from '../api';
 
 export default function AddChannelModal({ show, onClose, onAdd, categories }) {
   const [input, setInput] = useState('');
   const [name, setName] = useState('');
+  const [resolving, setResolving] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState('');
   const [favorite, setFavorite] = useState(false);
   const { language } = useTheme();
   const categoryRef = useRef(null);
+  const resolveTimer = useRef(null);
+
+  useEffect(() => {
+    return () => { if (resolveTimer.current) clearTimeout(resolveTimer.current); };
+  }, []);
+
+  useEffect(() => {
+    if (!show) return;
+    setInput('');
+    setName('');
+    setResolving(false);
+    setSelectedCategories([]);
+    setCategoryInput('');
+    setFavorite(false);
+    if (resolveTimer.current) clearTimeout(resolveTimer.current);
+  }, [show]);
 
   const availableCategories = categories.filter(c => c !== 'Unspecified' && !selectedCategories.includes(c));
 
@@ -99,18 +117,18 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
               onChange={e => {
                 const val = e.target.value;
                 setInput(val);
-                let nameVal = val.trim();
-                if (nameVal.includes('youtube.com') || nameVal.includes('youtu.be')) {
-                  const match = nameVal.match(/@([\w.-]+)/);
-                  if (match) nameVal = match[1];
-                }
-                nameVal = nameVal.replace(/^@/, '');
-                nameVal = nameVal.replace(/[_#\-:/\\]+/g, ', ');
-                nameVal = nameVal.replace(/\.(?=[A-Za-z])/g, '. ');
-                nameVal = nameVal.replace(/([A-Z])/g, ' $1').trim();
-                let formatted = nameVal.charAt(0).toUpperCase() + nameVal.slice(1);
-                formatted = formatted.replace(/\s+/g, ' ').replace(/, ,/g, ', ').replace(/,+/g, ',').trim();
-                setName(formatted);
+
+                if (resolveTimer.current) clearTimeout(resolveTimer.current);
+                resolveTimer.current = setTimeout(async () => {
+                  const handle = normalizeHandle(val);
+                  if (!handle) return;
+                  setResolving(true);
+                  try {
+                    const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: handle } });
+                    if (data.name) setName(data.name);
+                  } catch {}
+                  setResolving(false);
+                }, 600);
               }}
               onKeyDown={handleKeyDown}
               placeholder={t(language, 'addPlaceholder')}
@@ -123,13 +141,20 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
             <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
               {t(language, 'channelName')}
             </label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t(language, 'channelName')}
-              className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
-            />
+            <div className="relative">
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t(language, 'channelName')}
+                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+              />
+              {resolving && (
+                <div className="absolute end-2 top-1/2 -translate-y-1/2">
+                  <div className="w-3.5 h-3.5 border-2 border-yt-accent border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
