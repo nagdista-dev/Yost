@@ -24,7 +24,6 @@ function AppContent() {
     handleUpdateChannel, handleToggleFavorite, handleImportChannels,
   } = useChannels();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [clearFilterKey, setClearFilterKey] = useState(0);
   const [activeTab, setActiveTab] = useState(getStartPage);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -67,10 +66,6 @@ function AppContent() {
     setRefreshTrigger(t => t + 1);
   }
 
-  function handleClearFilters() {
-    setClearFilterKey(k => k + 1);
-  }
-
   function handleSelectCategory(cat) {
     setSelectedCategory(prev => prev === cat ? null : cat);
     if (activeTab !== 'home') handleSetActiveTab('home');
@@ -98,7 +93,6 @@ function AppContent() {
           onToggleFavorite={handleToggleFavorite}
           categories={categories}
           onBack={() => setChannelProfile(null)}
-          clearFilterKey={clearFilterKey}
         />
       );
     }
@@ -129,7 +123,6 @@ function AppContent() {
             categories={categories}
             refreshTrigger={refreshTrigger}
             onRefreshAll={handleRefreshAll}
-            clearFilterKey={clearFilterKey}
           />
         );
       case 'favorites': {
@@ -179,7 +172,6 @@ function AppContent() {
         onAddChannel={() => setShowAddModal(true)}
         onMenuToggle={() => setSidebarOpen(prev => !prev)}
         onGoHome={() => { handleSetActiveTab(getStartPage()); setSelectedCategory(null); }}
-        onClearFilters={handleClearFilters}
       />
       <ChannelSidebar
         activeTab={activeTab}

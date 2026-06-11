@@ -13,7 +13,7 @@ function isLikelyLive(title) {
   return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
 }
 
-export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite, categories, onBack, clearFilterKey }) {
+export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite, categories, onBack }) {
   const { language } = useTheme();
   const channelHandle = channel?.handle;
   const [data, setData] = useState(null);
@@ -29,11 +29,6 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
   const [editCategories, setEditCategories] = useState([]);
   const [editCategoryInput, setEditCategoryInput] = useState('');
   const editCategoryRef = useRef(null);
-
-  useEffect(() => {
-    setCategoryFilter(null);
-    setLiveFilter(false);
-  }, [clearFilterKey]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -234,10 +229,6 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
             setListMode={setListMode}
             liveFilter={liveFilter}
             setLiveFilter={setLiveFilter}
-            onClearFilters={() => {
-              setCategoryFilter(null);
-              setLiveFilter(false);
-            }}
           />
 
           <div className="flex flex-col gap-3">

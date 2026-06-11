@@ -6,18 +6,13 @@ function isLikelyLive(title) {
   return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
 }
 
-export default function useVideos(channels, refreshTrigger = 0, clearFilterKey = 0) {
+export default function useVideos(channels, refreshTrigger = 0) {
   const [videos, setVideos] = useState({});
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
   const [liveFilter, setLiveFilter] = useState(false);
-
-  useEffect(() => {
-    setCategoryFilter(null);
-    setLiveFilter(false);
-  }, [clearFilterKey]);
 
   const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
@@ -113,7 +108,7 @@ export default function useVideos(channels, refreshTrigger = 0, clearFilterKey =
       _viewsRank: viewsRankMap[v.videoId] || null,
       _likesRank: likesRankMap[v.videoId] || null,
     }));
-  }, [videos, categoryFilter, sortBy]);
+  }, [videos, categoryFilter, sortBy, liveFilter]);
 
   return {
     videos, loading, progress,
