@@ -85,7 +85,16 @@ function AppContent() {
 
   const pageContent = () => {
     if (channelProfile) {
-      return <ChannelPage channelHandle={channelProfile} onBack={() => setChannelProfile(null)} />;
+      const channel = channels.find(ch => ch.handle === channelProfile);
+      return (
+        <ChannelPage
+          channel={channel}
+          onUpdateChannel={handleUpdateChannel}
+          onToggleFavorite={handleToggleFavorite}
+          categories={categories}
+          onBack={() => setChannelProfile(null)}
+        />
+      );
     }
     switch (activeTab) {
       case 'home': {

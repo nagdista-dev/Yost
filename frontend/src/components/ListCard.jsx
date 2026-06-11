@@ -11,6 +11,7 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
   const ago = timeAgo(video.published, language);
   const duration = formatDuration(video.length);
   const viewsLabel = formatViews(video.views) || '0';
+  const likesLabel = formatViews(video.likes) || '0';
   const rank = ranks?.viewsRank;
 
   return (
@@ -76,12 +77,10 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
             <Eye size={12} className="text-yt-text-secondary" />
             {viewsLabel}
           </span>
-          {video.likes && (
-            <span className="inline-flex items-center gap-1">
-              <Heart size={12} className="text-yt-text-secondary" />
-              {formatViews(video.likes)}
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1">
+            <Heart size={12} className="text-yt-text-secondary" />
+            {likesLabel}
+          </span>
           {ratio && (
             <span className="inline-flex items-center gap-1 text-emerald-500">
               <TrendingUp size={12} />

@@ -122,6 +122,36 @@ async function scrapeLatestVideo(handle) {
   }
 }
 
+async function fetchVideoDetails(videoId) {
+  try {
+    const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (!vRsp.ok) return {};
+    const vHtml = await vRsp.text();
+    const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
+    const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
+    const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
+    let dislikes = '';
+    const ddRsp = await fetch(`https://returnyoutubedislike.com/api/v1?videoId=${videoId}`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (ddRsp.ok) {
+      const dd = await ddRsp.json();
+      dislikes = String(dd.dislikes || '');
+    }
+    return {
+      likes: lcMatch ? lcMatch[1] : '',
+      comments: ccMatch ? ccMatch[1] : '',
+      length: durMatch ? durMatch[1] : '',
+      dislikes,
+    };
+  } catch {
+    return {};
+  }
+}
+
 async function scrapeChannelVideos(handle) {
   const cacheKey = handle.toLowerCase();
 
@@ -203,6 +233,17 @@ async function scrapeChannelVideos(handle) {
   }
 
   console.log(`[channel] found ${entries.length} videos for @${handle}`);
+
+  const detailResults = await Promise.allSettled(
+    entries.map(e => fetchVideoDetails(e.videoId))
+  );
+  entries.forEach((entry, i) => {
+    const details = detailResults[i]?.value || {};
+    entry.likes = details.likes || '';
+    entry.dislikes = details.dislikes || '';
+    entry.comments = details.comments || '';
+    entry.length = details.length || '';
+  });
 
   const result = {
     channelId,
