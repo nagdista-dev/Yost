@@ -9,16 +9,18 @@ export default function Navbar({ title, onAddChannel, onMenuToggle, onGoHome }) 
 
   return (
     <header className="fixed top-0 inset-x-0 h-16 bg-yt-sidebar/85 backdrop-blur-lg border-b border-yt-border z-40 flex items-center px-4 md:px-6">
-      <div className="flex items-center w-full">
-        <button
-          onClick={onMenuToggle}
-          className="md:hidden p-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors"
-          aria-label="Toggle menu"
-        >
-          <Menu size={22} />
-        </button>
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center">
+          <button
+            onClick={onMenuToggle}
+            className="md:hidden p-2 rounded-xl text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary transition-colors"
+            aria-label="Toggle menu"
+          >
+            <Menu size={22} />
+          </button>
+        </div>
 
-        <div className="flex items-center gap-2 md:gap-3 ms-auto">
+        <div className="flex items-center gap-2 md:gap-3">
           <span 
             onClick={onGoHome}
             className="text-yt-text text-lg font-extrabold tracking-tight flex-shrink-0 cursor-pointer hover:opacity-80 transition select-none"

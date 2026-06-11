@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Heart, X } from 'lucide-react';
+import { Heart, RotateCw, X } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import api from '../api';
@@ -93,6 +93,17 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
     reset();
   }
 
+  async function populateName() {
+    const handle = normalizeHandle(input);
+    if (!handle) return;
+    setResolving(true);
+    try {
+      const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: handle } });
+      if (data.name) setName(data.name);
+    } catch {}
+    setResolving(false);
+  }
+
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !categoryInput) handleAdd();
   }
@@ -147,13 +158,17 @@ export default function AddChannelModal({ show, onClose, onAdd, categories }) {
                 onChange={e => setName(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t(language, 'channelName')}
-                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+                className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 pe-10 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
               />
-              {resolving && (
-                <div className="absolute end-2 top-1/2 -translate-y-1/2">
-                  <div className="w-3.5 h-3.5 border-2 border-yt-accent border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={populateName}
+                disabled={resolving}
+                className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-yt-text-muted hover:text-yt-accent transition disabled:opacity-50"
+                title={t(language, 'populateName')}
+              >
+                <RotateCw size={16} className={resolving ? 'animate-spin' : ''} />
+              </button>
             </div>
           </div>
 
