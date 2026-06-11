@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Film, X, RefreshCw } from 'lucide-react';
+import { Film, X, RefreshCw, Trash2 } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
@@ -8,7 +8,7 @@ import VideoPlayerModal from '../components/VideoPlayerModal';
 import VideoFilters from '../components/VideoFilters';
 import useVideos from '../hooks/useVideos';
 
-export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll }) {
+export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll, clearFilterKey }) {
   const { language } = useTheme();
   const [listMode, setListMode] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState(null);
@@ -24,7 +24,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     categoryFilter, setCategoryFilter,
     sortBy, setSortBy,
     liveFilter, setLiveFilter,
-  } = useVideos(channels, refreshTrigger);
+  } = useVideos(channels, refreshTrigger, clearFilterKey);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -107,12 +107,15 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
                 setListMode={setListMode}
                 liveFilter={liveFilter}
                 setLiveFilter={setLiveFilter}
-                onClearFilters={() => {
-                  setCategoryFilter(null);
-                  setLiveFilter(false);
-                }}
               />
             </div>
+            <button
+              onClick={() => { setCategoryFilter(null); setLiveFilter(false); }}
+              className="shrink-0 p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition"
+              title="Clear filters"
+            >
+              <Trash2 size={16} />
+            </button>
             <button
               onClick={onRefreshAll}
               disabled={loading}

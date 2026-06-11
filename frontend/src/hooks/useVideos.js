@@ -1,13 +1,23 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../api';
 
-export default function useVideos(channels, refreshTrigger = 0) {
+function isLikelyLive(title) {
+  if (!title) return false;
+  return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
+}
+
+export default function useVideos(channels, refreshTrigger = 0, clearFilterKey = 0) {
   const [videos, setVideos] = useState({});
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
   const [liveFilter, setLiveFilter] = useState(false);
+
+  useEffect(() => {
+    setCategoryFilter(null);
+    setLiveFilter(false);
+  }, [clearFilterKey]);
 
   const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
@@ -58,7 +68,7 @@ export default function useVideos(channels, refreshTrigger = 0) {
   const videoList = useMemo(() => {
     const filtered = Object.values(videos).filter(v => {
       if (categoryFilter && !(v._channelCategories || []).includes(categoryFilter)) return false;
-      if (liveFilter && !v.isLive) return false;
+      if (liveFilter && !v.isLive && !isLikelyLive(v.title)) return false;
       return true;
     });
 

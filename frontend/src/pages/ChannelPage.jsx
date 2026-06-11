@@ -8,7 +8,12 @@ import VideoFilters from '../components/VideoFilters';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
-export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite, categories, onBack }) {
+function isLikelyLive(title) {
+  if (!title) return false;
+  return /(?:🔴|⏺|LIVE|PREMIERE)\b/i.test(title);
+}
+
+export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite, categories, onBack, clearFilterKey }) {
   const { language } = useTheme();
   const channelHandle = channel?.handle;
   const [data, setData] = useState(null);
@@ -24,6 +29,11 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
   const [editCategories, setEditCategories] = useState([]);
   const [editCategoryInput, setEditCategoryInput] = useState('');
   const editCategoryRef = useRef(null);
+
+  useEffect(() => {
+    setCategoryFilter(null);
+    setLiveFilter(false);
+  }, [clearFilterKey]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -66,7 +76,7 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
     }
 
     if (liveFilter) {
-      list = list.filter(v => v.isLive);
+      list = list.filter(v => v.isLive || isLikelyLive(v.title));
     }
 
     if (search) {
