@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Film, Search, X, Heart, Edit2 } from 'lucide-react';
+import { Film, Search, X } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
@@ -99,37 +99,48 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     );
   }
 
+  const activeFilterCount = [categoryFilter, liveFilter].filter(Boolean).length;
+
   return (
     <div className="space-y-4 md:space-y-5">
-      <VideoFilters
-        allCategories={allCategories}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        listMode={listMode}
-        setListMode={setListMode}
-        liveFilter={liveFilter}
-        setLiveFilter={setLiveFilter}
-      />
+      <div className="bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm overflow-hidden">
+        <div className="px-4 md:px-5 pt-4 md:pt-5 pb-3 md:pb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-5 rounded-full bg-yt-accent shrink-0" />
+            <h2 className="text-yt-text font-bold text-sm md:text-base">{t(language, 'tabVideos')}</h2>
+          </div>
 
-      <div className="relative max-w-xs">
-        <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search videos..."
-          className="w-full ps-9 pe-8 py-2 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/50 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute end-2 top-1/2 -translate-y-1/2 text-yt-text-muted hover:text-yt-text"
-          >
-            <X size={14} />
-          </button>
-        )}
+          <VideoFilters
+            allCategories={allCategories}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            listMode={listMode}
+            setListMode={setListMode}
+            liveFilter={liveFilter}
+            setLiveFilter={setLiveFilter}
+          />
+
+          <div className="mt-3 relative">
+            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by video title or channel name..."
+              className="w-full ps-9 pe-8 py-2.5 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/30 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent focus:border-yt-accent/30 transition-all placeholder-yt-text-muted/60"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute end-2 top-1/2 -translate-y-1/2 text-yt-text-muted hover:text-yt-text p-0.5 rounded transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -155,13 +166,18 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between px-0.5">
-            <p className="text-xs text-yt-text-muted">
+          <div className="flex items-center gap-2 px-1 py-2.5">
+            <div className="h-px flex-1 bg-yt-border/20" />
+            <p className="text-xs text-yt-text-muted/70 font-medium whitespace-nowrap">
               {search
                 ? `${filteredList.length} of ${videoList.length} videos`
                 : t(language, 'showingVideos', filteredList.length)
               }
+              {activeFilterCount > 0 && (
+                <span className="ms-1.5 text-yt-accent/70">· {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active</span>
+              )}
             </p>
+            <div className="h-px flex-1 bg-yt-border/20" />
           </div>
           <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
             {filteredList.map(video => (
