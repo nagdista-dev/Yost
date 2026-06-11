@@ -1,25 +1,37 @@
+import { useState } from 'react';
 import { Film, Play, Clock } from 'lucide-react';
 import timeAgo, { formatDuration } from '../utils/timeAgo';
+
+const THUMB_FALLBACKS = ['maxresdefault', 'hqdefault', 'mqdefault', 'default'];
 
 export default function VideoThumbnail({ video, rank, onPlay, language = 'en' }) {
   const ago = timeAgo(video.published, language);
   const duration = formatDuration(video.length);
+  const [thumbIdx, setThumbIdx] = useState(0);
+
+  const thumbUrl = video.videoId
+    ? `https://i.ytimg.com/vi/${video.videoId}/${THUMB_FALLBACKS[thumbIdx]}.jpg`
+    : null;
+
+  function onThumbError() {
+    if (thumbIdx < THUMB_FALLBACKS.length - 1) {
+      setThumbIdx(thumbIdx + 1);
+    }
+  }
 
   return (
     <div
       className="aspect-video bg-yt-bg-tertiary overflow-hidden relative cursor-pointer"
       onClick={() => video.videoId && onPlay(video.videoId)}
     >
-      {video.thumbnail ? (
+      {thumbUrl ? (
           <img
-            src={video.thumbnail}
+            key={thumbUrl}
+            src={thumbUrl}
             alt={video.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
-            onError={(e) => {
-              e.target.src = `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
-              e.target.onerror = null;
-            }}
+            onError={onThumbError}
           />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-yt-text-muted/30">

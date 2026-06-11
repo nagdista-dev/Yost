@@ -10,6 +10,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json());
 
 const cache = loadCacheFromDisk();
 
@@ -174,6 +175,44 @@ app.get('/api/latest-video', async (req, res) => {
     res.json({ video });
   } catch (err) {
     console.error(`[video] failed for @${handle}:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const latestVideosCache = new Map();
+const LATEST_VIDEOS_CACHE_TTL = 2 * 60 * 1000;
+
+app.post('/api/latest-videos', async (req, res) => {
+  let { handles, refresh } = req.body;
+  if (!handles || !Array.isArray(handles) || handles.length === 0) {
+    return res.status(400).json({ error: 'handles array is required' });
+  }
+
+  const cacheKey = [...handles].sort().join(',');
+  if (!refresh) {
+    const cached = latestVideosCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < LATEST_VIDEOS_CACHE_TTL) {
+      return res.json({ videos: cached.data });
+    }
+  }
+
+  handles = handles.map(h => h.replace('@', ''));
+
+  try {
+    const results = {};
+    const BATCH = 5;
+    for (let i = 0; i < handles.length; i += BATCH) {
+      const batch = handles.slice(i, i + BATCH);
+      await Promise.allSettled(batch.map(async (handle) => {
+        const video = await scrapeLatestVideo(handle);
+        results[handle] = video;
+      }));
+    }
+
+    latestVideosCache.set(cacheKey, { data: results, fetchedAt: Date.now() });
+    res.json({ videos: results });
+  } catch (err) {
+    console.error('[latest-videos] error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
