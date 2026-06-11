@@ -1,4 +1,4 @@
-import { Edit2, ExternalLink } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoThumbnail from './VideoThumbnail';
@@ -45,23 +45,11 @@ export default function GridCard({ video, ranks, onPlay, onChannelClick, onEditC
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); onEditChannel?.(video._channelHandle); }}
-              className="p-0.5 rounded text-yt-text-muted opacity-0 group-hover:opacity-100 hover:text-yt-accent transition-all shrink-0"
+              className="p-1 rounded-lg text-yt-text-muted/60 opacity-0 group-hover:opacity-100 hover:bg-yt-accent/10 hover:text-yt-accent transition-all shrink-0"
               title="Edit channel"
             >
-              <Edit2 size={11} />
+              <Edit2 size={12} />
             </button>
-            {video.videoUrl && (
-              <a
-                href={video.videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                className="p-0.5 rounded text-yt-text-muted opacity-0 group-hover:opacity-100 hover:text-yt-accent transition-all shrink-0"
-                title="Open on YouTube"
-              >
-                <ExternalLink size={11} />
-              </a>
-            )}
           </div>
         </div>
 
