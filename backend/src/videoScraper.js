@@ -3,6 +3,53 @@ const channelVideoCache = new Map();
 const chIdCache = new Map();
 const VIDEO_CACHE_TTL_MS = 30 * 60 * 1000;
 
+function parseRssStats(entryXml) {
+  const viewsM = entryXml.match(/media:statistics\s+views="(\d+)"/i);
+  const likesM = entryXml.match(/media:statistics\s+likes="(\d+)"/i);
+  const commentsM = entryXml.match(/media:statistics\s+comments="(\d+)"/i);
+  return {
+    views: viewsM ? viewsM[1] : null,
+    likes: likesM ? likesM[1] : null,
+    comments: commentsM ? commentsM[1] : null,
+  };
+}
+
+async function scrapeWatchPage(videoId) {
+  try {
+    const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (!vRsp.ok) return {};
+    const vHtml = await vRsp.text();
+    const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
+    const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
+    const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
+    const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
+    return {
+      views: vcMatch ? vcMatch[1] : null,
+      likes: lcMatch ? lcMatch[1] : null,
+      comments: ccMatch ? ccMatch[1] : null,
+      length: durMatch ? durMatch[1] : null,
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function fetchDislikes(videoId) {
+  try {
+    const ddRsp = await fetch(`https://returnyoutubedislike.com/api/v1?videoId=${videoId}`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (ddRsp.ok) {
+      const dd = await ddRsp.json();
+      return String(dd.dislikes || '');
+    }
+  } catch (_) {}
+  return '';
+}
+
 async function scrapeLatestVideo(handle) {
   const cacheKey = handle.toLowerCase();
   const cached = videoCache.get(cacheKey);
@@ -67,38 +114,24 @@ async function scrapeLatestVideo(handle) {
       return null;
     }
 
-    let views = '';
-    let likes = '';
-    let comments = '';
+    const rssStats = parseRssStats(entryXml);
+
+    let views = rssStats.views || '';
+    let likes = rssStats.likes || '';
+    let comments = rssStats.comments || '';
     let dislikes = '';
     let videoLength = '';
-    try {
-      const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-        signal: AbortSignal.timeout(10000),
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      });
-      if (vRsp.ok) {
-        const vHtml = await vRsp.text();
-        const vcMatch = vHtml.match(/"viewCount"\s*:\s*"(\d+)"/);
-        const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
-        const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
-        const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
-        if (vcMatch) views = vcMatch[1];
-        if (lcMatch) likes = lcMatch[1];
-        if (ccMatch) comments = ccMatch[1];
-        if (durMatch) videoLength = durMatch[1];
-      }
-    } catch (_) { }
 
-    try {
-      const ddRsp = await fetch(`https://returnyoutubedislike.com/api/v1?videoId=${videoId}`, {
-        signal: AbortSignal.timeout(5000),
-      });
-      if (ddRsp.ok) {
-        const dd = await ddRsp.json();
-        dislikes = String(dd.dislikes || '');
-      }
-    } catch (_) { }
+    const needsWatchPage = !rssStats.views || !rssStats.likes || !rssStats.comments;
+    if (needsWatchPage) {
+      const wp = await scrapeWatchPage(videoId);
+      if (!views && wp.views) views = wp.views;
+      if (!likes && wp.likes) likes = wp.likes;
+      if (!comments && wp.comments) comments = wp.comments;
+      if (!videoLength && wp.length) videoLength = wp.length;
+    }
+
+    dislikes = await fetchDislikes(videoId);
 
     const video = {
       videoId,
@@ -122,40 +155,9 @@ async function scrapeLatestVideo(handle) {
   }
 }
 
-async function fetchVideoDetails(videoId) {
-  try {
-    const vRsp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      signal: AbortSignal.timeout(10000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-    });
-    if (!vRsp.ok) return {};
-    const vHtml = await vRsp.text();
-    const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
-    const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
-    const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
-    let dislikes = '';
-    const ddRsp = await fetch(`https://returnyoutubedislike.com/api/v1?videoId=${videoId}`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (ddRsp.ok) {
-      const dd = await ddRsp.json();
-      dislikes = String(dd.dislikes || '');
-    }
-    return {
-      likes: lcMatch ? lcMatch[1] : '',
-      comments: ccMatch ? ccMatch[1] : '',
-      length: durMatch ? durMatch[1] : '',
-      dislikes,
-    };
-  } catch {
-    return {};
-  }
-}
-
 async function scrapeChannelVideos(handle) {
   const cacheKey = handle.toLowerCase();
 
-  // -- in-memory result cache (fresh) --
   const cached = channelVideoCache.get(cacheKey);
   if (cached && Date.now() - cached.fetchedAt < VIDEO_CACHE_TTL_MS) {
     console.log(`[channel] cache fresh for @${handle}`);
@@ -166,7 +168,6 @@ async function scrapeChannelVideos(handle) {
   let channelName = '';
   const entries = [];
 
-  // -- try to get channelId from in-memory cache first (avoid HTML scrape) --
   const chCached = chIdCache.get(cacheKey);
   if (chCached && chCached.channelId) {
     channelId = chCached.channelId;
@@ -192,7 +193,6 @@ async function scrapeChannelVideos(handle) {
     console.log(`[channel] found channel ID ${channelId} for @${handle}`);
   }
 
-  // -- RSS feed --
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
     const rssRsp = await fetch(rssUrl, {
@@ -218,13 +218,17 @@ async function scrapeChannelVideos(handle) {
       const videoId = vid[1].trim();
       const titleM = ex.match(/<title[^>]*>([^<]+)<\/title>/);
       const pubM = ex.match(/<published[^>]*>([^<]+)<\/published>/);
-      const viewsM = ex.match(/media:statistics\s+views="(\d+)"/i);
+      const rssStats = parseRssStats(ex);
       entries.push({
         videoId,
         title: titleM ? titleM[1].trim() : '',
         thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
         published: pubM ? pubM[1].trim() : '',
-        views: viewsM ? viewsM[1] : '',
+        views: rssStats.views || '',
+        likes: rssStats.likes || '',
+        comments: rssStats.comments || '',
+        dislikes: '',
+        length: '',
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
       });
     }
@@ -234,16 +238,24 @@ async function scrapeChannelVideos(handle) {
 
   console.log(`[channel] found ${entries.length} videos for @${handle}`);
 
-  const detailResults = await Promise.allSettled(
-    entries.map(e => fetchVideoDetails(e.videoId))
-  );
-  entries.forEach((entry, i) => {
-    const details = detailResults[i]?.value || {};
-    entry.likes = details.likes || '';
-    entry.dislikes = details.dislikes || '';
-    entry.comments = details.comments || '';
-    entry.length = details.length || '';
-  });
+  const needsScraping = entries.filter(e => !e.likes || !e.comments);
+  if (needsScraping.length > 0) {
+    const results = await Promise.allSettled(
+      needsScraping.map(e => scrapeWatchPage(e.videoId))
+    );
+    const dislikesResults = await Promise.allSettled(
+      needsScraping.map(e => fetchDislikes(e.videoId))
+    );
+    needsScraping.forEach((entry, i) => {
+      const wp = results[i]?.value || {};
+      const dd = dislikesResults[i]?.value || '';
+      if (!entry.views && wp.views) entry.views = wp.views;
+      if (!entry.likes && wp.likes) entry.likes = wp.likes;
+      if (!entry.comments && wp.comments) entry.comments = wp.comments;
+      if (!entry.length && wp.length) entry.length = wp.length;
+      if (!entry.dislikes && dd) entry.dislikes = dd;
+    });
+  }
 
   const result = {
     channelId,
