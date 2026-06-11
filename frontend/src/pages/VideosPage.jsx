@@ -187,7 +187,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
           <div className={listMode ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5'}>
             {videoList.map(video => (
               <VideoCard
-                key={video.videoId}
+                key={video.videoId || video._channelHandle}
                 video={video}
                 list={listMode}
                 ranks={{ viewsRank: video._viewsRank, likesRank: video._likesRank }}
