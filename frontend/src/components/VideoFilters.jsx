@@ -7,7 +7,7 @@ const SORT_OPTIONS = ['newest', 'views', 'likes', 'dislikes', 'ratio'];
 export default function VideoFilters({
   allCategories, categoryFilter, setCategoryFilter,
   sortBy, setSortBy, listMode, setListMode,
-  liveFilter, setLiveFilter,
+  liveFilter, setLiveFilter, onClearFilters,
 }) {
   const { language } = useTheme();
 
@@ -86,8 +86,8 @@ export default function VideoFilters({
         </div>
       </div>
 
-      {categoryFilter && (
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {categoryFilter && (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yt-accent/10 text-yt-accent text-xs font-medium">
             {categoryFilter === 'Unspecified' ? t(language, 'unspecified') : categoryFilter}
             <button
@@ -97,8 +97,16 @@ export default function VideoFilters({
               <X size={12} />
             </button>
           </span>
-        </div>
-      )}
+        )}
+        {(categoryFilter || liveFilter) && onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            className="px-2.5 py-1 rounded-lg text-xs font-medium text-yt-text-muted hover:text-yt-text hover:bg-yt-bg-tertiary/50 border border-yt-border/30 transition"
+          >
+            {t(language, 'clearFilters')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

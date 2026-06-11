@@ -131,6 +131,8 @@ const translations = {
     watchScore: (s) => `Watch score ${s}%`,
     gridView: 'Grid view',
     listView: 'List view',
+    clearFilters: 'Clear filters',
+    refreshVideos: 'Refresh',
   },
   ar: {
     appTitle: 'آخر المنشورات',
@@ -271,6 +273,8 @@ const translations = {
     watchScore: (s) => `نسبة المشاهدة ${s}%`,
     gridView: 'عرض شبكي',
     listView: 'عرض قائمة',
+    clearFilters: 'مسح التصفية',
+    refreshVideos: 'تحديث',
   },
 };
 

@@ -224,6 +224,10 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
             setListMode={setListMode}
             liveFilter={liveFilter}
             setLiveFilter={setLiveFilter}
+            onClearFilters={() => {
+              setCategoryFilter(null);
+              setLiveFilter(false);
+            }}
           />
 
           <div className="flex flex-col gap-3">

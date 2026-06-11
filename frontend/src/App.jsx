@@ -121,6 +121,8 @@ function AppContent() {
             onUpdateChannel={handleUpdateChannel}
             onToggleFavorite={handleToggleFavorite}
             categories={categories}
+            refreshTrigger={refreshTrigger}
+            onRefreshAll={handleRefreshAll}
           />
         );
       case 'favorites': {

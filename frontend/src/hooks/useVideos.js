@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../api';
 
-export default function useVideos(channels) {
+export default function useVideos(channels, refreshTrigger = 0) {
   const [videos, setVideos] = useState({});
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
@@ -53,7 +53,7 @@ export default function useVideos(channels) {
 
     fetchAll();
     return () => { cancelled = true; };
-  }, [channels]);
+  }, [channels, refreshTrigger]);
 
   const videoList = useMemo(() => {
     const filtered = Object.values(videos).filter(v => {

@@ -1,4 +1,4 @@
-import { Film, Play, Clock, Eye, Heart, TrendingUp, Edit2 } from 'lucide-react';
+import { Film, Play, Clock, Eye, Heart, TrendingUp, Edit2, ExternalLink } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import { formatViews } from '../utils/formatCount';
@@ -14,6 +14,7 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditC
   const likesLabel = formatViews(video.likes) || '0';
   const rank = ranks?.viewsRank;
   const isLive = video.isLive;
+  const avatarLetter = (video._channelName || video._channelHandle || '').replace('@', '').charAt(0).toUpperCase();
 
   return (
     <div className={`group bg-yt-bg-card rounded-xl border shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex gap-4 p-3 ${
@@ -83,6 +84,9 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditC
             </h3>
           </div>
           <div className="flex items-center gap-1 mt-1">
+            <span className="w-4 h-4 rounded-full bg-yt-accent/20 text-yt-accent text-[9px] font-bold flex items-center justify-center shrink-0">
+              {avatarLetter}
+            </span>
             <p
               className="text-yt-text-muted text-xs truncate cursor-pointer hover:text-yt-accent transition-colors"
               onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
@@ -96,6 +100,18 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick, onEditC
             >
               <Edit2 size={11} />
             </button>
+            {video.videoUrl && (
+              <a
+                href={video.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="p-0.5 rounded text-yt-text-muted opacity-0 group-hover:opacity-100 hover:text-yt-accent transition-all shrink-0"
+                title="Open on YouTube"
+              >
+                <ExternalLink size={11} />
+              </a>
+            )}
           </div>
         </div>
 

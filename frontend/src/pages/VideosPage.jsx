@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Film, Search, X } from 'lucide-react';
+import { Film, Search, X, RefreshCw } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
@@ -8,7 +8,7 @@ import VideoPlayerModal from '../components/VideoPlayerModal';
 import VideoFilters from '../components/VideoFilters';
 import useVideos from '../hooks/useVideos';
 
-export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories }) {
+export default function VideosPage({ channels, onChannelClick, onUpdateChannel, onToggleFavorite, categories, refreshTrigger, onRefreshAll }) {
   const { language } = useTheme();
   const [listMode, setListMode] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState(null);
@@ -25,7 +25,7 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
     categoryFilter, setCategoryFilter,
     sortBy, setSortBy,
     liveFilter, setLiveFilter,
-  } = useVideos(channels);
+  } = useVideos(channels, refreshTrigger);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -110,17 +110,33 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             <h2 className="text-yt-text font-bold text-sm md:text-base">{t(language, 'tabVideos')}</h2>
           </div>
 
-          <VideoFilters
-            allCategories={allCategories}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            listMode={listMode}
-            setListMode={setListMode}
-            liveFilter={liveFilter}
-            setLiveFilter={setLiveFilter}
-          />
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <VideoFilters
+                allCategories={allCategories}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                listMode={listMode}
+                setListMode={setListMode}
+                liveFilter={liveFilter}
+                setLiveFilter={setLiveFilter}
+                onClearFilters={() => {
+                  setCategoryFilter(null);
+                  setLiveFilter(false);
+                }}
+              />
+            </div>
+            <button
+              onClick={onRefreshAll}
+              disabled={loading}
+              className="shrink-0 p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition disabled:opacity-40"
+              title={t(language, 'refreshVideos')}
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
 
           <div className="mt-3 relative">
             <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
