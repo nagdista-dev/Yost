@@ -5,14 +5,18 @@ import { useTheme } from './context/useTheme';
 import Navbar from './components/Navbar';
 import ChannelSidebar from './components/ChannelSidebar';
 import AddChannelModal from './components/AddChannelModal';
+import AddPlaylistModal from './components/AddPlaylistModal';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import HomePage from './pages/HomePage';
 import ChannelsPage from './pages/ChannelsPage';
 import VideosPage from './pages/VideosPage';
 import ChannelPage from './pages/ChannelPage';
+import PlaylistsPage from './pages/PlaylistsPage';
+import PlaylistPage from './pages/PlaylistPage';
 import SettingsPage from './pages/SettingsPage';
 import ExportPage from './pages/ExportPage';
 import useChannels from './hooks/useChannels';
+import usePlaylists from './hooks/usePlaylists';
 import { getStartPage } from './components/StartPageSelector';
 import FloatingAddButton from './components/FloatingAddButton';
 import { t } from './i18n';
@@ -23,18 +27,24 @@ function AppContent() {
     handleAddChannel, handleRemoveChannel,
     handleUpdateChannel, handleToggleFavorite, handleImportChannels,
   } = useChannels();
+  const {
+    playlists, handleAddPlaylist, handleRemovePlaylist,
+  } = usePlaylists();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState(getStartPage);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddPlaylistModal, setShowAddPlaylistModal] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [channelProfile, setChannelProfile] = useState(null);
+  const [playlistProfile, setPlaylistProfile] = useState(null);
   const { language } = useTheme();
 
   const handleSetActiveTab = useCallback((tab) => {
     setActiveTab(tab);
     setChannelProfile(null);
+    setPlaylistProfile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -56,13 +66,20 @@ function AppContent() {
       } else if (e.key === 'Escape') {
         setShowShortcuts(false);
         setChannelProfile(null);
+        setPlaylistProfile(null);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSetActiveTab]);
 
-  function handleRefreshAll() {
+  function handleOpenAdd() {
+    if (activeTab === 'playlists') {
+      setShowAddPlaylistModal(true);
+    } else {
+      setShowAddModal(true);
+    }
+  }
     setRefreshTrigger(t => t + 1);
   }
 
@@ -72,9 +89,11 @@ function AppContent() {
   }
 
   const pageTitle = () => {
+    if (playlistProfile) return t(language, 'tabPlaylists');
     switch (activeTab) {
       case 'home': return t(language, 'appTitle');
       case 'videos': return t(language, 'tabVideos');
+      case 'playlists': return t(language, 'tabPlaylists');
       case 'favorites': return t(language, 'favoritesTitle');
       case 'channels': return t(language, 'channels');
       case 'settings': return t(language, 'settingsTitle');
@@ -84,7 +103,15 @@ function AppContent() {
   };
 
   const pageContent = () => {
-      if (channelProfile) {
+    if (playlistProfile) {
+      return (
+        <PlaylistPage
+          playlist={playlistProfile}
+          onBack={() => setPlaylistProfile(null)}
+        />
+      );
+    }
+    if (channelProfile) {
       const channel = channels.find(ch => ch.handle === channelProfile);
       return (
         <ChannelPage
@@ -146,6 +173,14 @@ function AppContent() {
             categories={categories}
           />
         );
+      case 'playlists':
+        return (
+          <PlaylistsPage
+            playlists={playlists}
+            onRemovePlaylist={handleRemovePlaylist}
+            onSelectPlaylist={(pl) => setPlaylistProfile(pl)}
+          />
+        );
       case 'settings':
         return <SettingsPage />;
       case 'export':
@@ -169,7 +204,7 @@ function AppContent() {
       />
       <Navbar
         title={pageTitle()}
-        onAddChannel={() => setShowAddModal(true)}
+        onAddChannel={handleOpenAdd}
         onMenuToggle={() => setSidebarOpen(prev => !prev)}
         onGoHome={() => { handleSetActiveTab(getStartPage()); setSelectedCategory(null); }}
       />
@@ -178,7 +213,7 @@ function AppContent() {
         setActiveTab={handleSetActiveTab}
         sidebarOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onAddChannel={() => { setShowAddModal(true); setSidebarOpen(false); }}
+        onAddChannel={() => { handleOpenAdd(); setSidebarOpen(false); }}
         categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={handleSelectCategory}
@@ -189,12 +224,19 @@ function AppContent() {
           {pageContent()}
         </div>
       </main>
-      <FloatingAddButton onClick={() => setShowAddModal(true)} />
+      <FloatingAddButton onClick={handleOpenAdd} />
 
       <AddChannelModal
         show={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddChannel}
+        categories={categories}
+      />
+
+      <AddPlaylistModal
+        show={showAddPlaylistModal}
+        onClose={() => setShowAddPlaylistModal(false)}
+        onAdd={handleAddPlaylist}
         categories={categories}
       />
 

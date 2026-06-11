@@ -71,6 +71,99 @@ app.get('/api/resolve-channel', async (req, res) => {
   }
 });
 
+app.get('/api/resolve-playlist', async (req, res) => {
+  const url = req.query.playlistUrl;
+  if (!url) return res.status(400).json({ error: 'Playlist URL is required' });
+
+  const idMatch = url.match(/[?&]list=([^&]+)/);
+  if (!idMatch) return res.json({ name: '', channelName: '' });
+  const playlistId = idMatch[1];
+
+  try {
+    const htmlRsp = await fetch(`https://www.youtube.com/playlist?list=${playlistId}`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (!htmlRsp.ok) return res.json({ name: '', channelName: '' });
+    const html = await htmlRsp.text();
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/);
+    const name = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
+    const channelMatch = html.match(/"ownerName"\s*:\s*"([^"]+)"/) || html.match(/"author"[^}]*"name"\s*:\s*"([^"]+)"/);
+    const channelName = channelMatch ? channelMatch[1].replace(/\\"/g, '').trim() : '';
+    res.json({ name, channelName, playlistId });
+  } catch {
+    res.json({ name: '', channelName: '' });
+  }
+});
+
+app.get('/api/playlist-videos', async (req, res) => {
+  const playlistId = req.query.playlistId;
+  if (!playlistId) return res.status(400).json({ error: 'playlistId is required' });
+
+  try {
+    const htmlRsp = await fetch(`https://www.youtube.com/playlist?list=${playlistId}`, {
+      signal: AbortSignal.timeout(15000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    if (!htmlRsp.ok) return res.status(500).json({ error: 'Failed to fetch playlist' });
+    const html = await htmlRsp.text();
+
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/);
+    const name = titleMatch ? titleMatch[1].replace(/ - YouTube$/, '').trim() : '';
+
+    const channelMatch = html.match(/"ownerName"\s*:\s*"([^"]+)"/) || html.match(/"author"[^}]*"name"\s*:\s*"([^"]+)"/);
+    const channelName = channelMatch ? channelMatch[1].replace(/\\"/g, '').trim() : '';
+
+    const videos = [];
+    const videoRegex = /"videoId"\s*:\s*"([\w-]+)"/g;
+    const seen = new Set();
+    let vm;
+    while ((vm = videoRegex.exec(html)) !== null) {
+      const vid = vm[1];
+      if (!seen.has(vid)) {
+        seen.add(vid);
+      }
+    }
+
+    const titleRegex = /"title"\s*:\s*\{\s*"runs"\s*:\s*\[\s*\{[^}]*"text"\s*:\s*"([^"]+)"[^}]*\}\s*\]/g;
+    const titles = [];
+    let tm;
+    while ((tm = titleRegex.exec(html)) !== null) {
+      titles.push(tm[1]);
+    }
+
+    const thumbRegex = /"thumbnail"\s*:\s*\{\s*"thumbnails"\s*:\s*\[\s*\{[^}]*"url"\s*:\s*"([^"]+)"[^}]*\}\s*\]/g;
+    const thumbs = [];
+    let thm;
+    while ((thm = thumbRegex.exec(html)) !== null) {
+      thumbs.push(thm[1]);
+    }
+
+    const lengthRegex = /"lengthSeconds"\s*:\s*"?(\d+)"?/g;
+    const lengths = [];
+    let lm;
+    while ((lm = lengthRegex.exec(html)) !== null) {
+      lengths.push(lm[1]);
+    }
+
+    const vidArray = Array.from(seen);
+    vidArray.forEach((vid, i) => {
+      videos.push({
+        videoId: vid,
+        title: titles[i] || '',
+        thumbnail: thumbs[i] || `https://i.ytimg.com/vi/${vid}/maxresdefault.jpg`,
+        length: lengths[i] || '',
+        position: i + 1,
+      });
+    });
+
+    res.json({ name, channelName, playlistId, videos, totalVideos: videos.length });
+  } catch (err) {
+    console.error('[playlist-videos] error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/latest-video', async (req, res) => {
   let handle = req.query.channelHandle || req.query.handle;
   if (!handle) return res.status(400).json({ error: 'Channel handle is required' });
