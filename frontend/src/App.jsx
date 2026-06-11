@@ -80,6 +80,8 @@ function AppContent() {
       setShowAddModal(true);
     }
   }
+
+  function handleRefreshAll() {
     setRefreshTrigger(t => t + 1);
   }
 
