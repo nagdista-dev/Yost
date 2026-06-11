@@ -24,7 +24,7 @@ export default function VideoFilters({
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
-      <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+      <div className="flex items-center gap-2 md:gap-2 flex-wrap">
         <select
           value={categoryFilter || ''}
           onChange={e => setCategoryFilter(e.target.value || null)}
@@ -51,18 +51,22 @@ export default function VideoFilters({
           <ChevronDown size={12} className="absolute end-1.5 md:end-2 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
         </div>
 
+        <div className="w-px h-5 bg-yt-border/20 shrink-0 hidden md:block" />
+
         <button
           onClick={() => setLiveFilter(!liveFilter)}
-          className={`inline-flex p-1 md:p-1.5 rounded-lg transition items-center gap-1 md:gap-1.5 text-xs font-medium ${
+          className={`inline-flex p-1.5 rounded-lg transition items-center gap-1 md:gap-1.5 text-xs font-medium ${
             liveFilter
               ? 'bg-red-500/15 text-red-500 border border-red-500/30'
               : 'text-yt-text-secondary hover:text-yt-text border border-transparent'
           }`}
           title="Live"
         >
-          <Radio size={11} className={liveFilter ? 'animate-pulse' : ''} />
+          <Radio size={12} className={liveFilter ? 'animate-pulse' : ''} />
           <span className="hidden md:inline">Live</span>
         </button>
+
+        <div className="w-px h-5 bg-yt-border/20 shrink-0 hidden md:block" />
 
         <div className="flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
           <button
@@ -72,7 +76,7 @@ export default function VideoFilters({
             }`}
             title={t(language, 'gridView')}
           >
-            <LayoutGrid size={14} />
+            <LayoutGrid size={13} />
           </button>
           <button
             onClick={() => setListMode(true)}
@@ -81,7 +85,7 @@ export default function VideoFilters({
             }`}
             title={t(language, 'listView')}
           >
-            <List size={14} />
+            <List size={13} />
           </button>
         </div>
       </div>

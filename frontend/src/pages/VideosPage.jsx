@@ -104,13 +104,13 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
   return (
     <div className="space-y-4 md:space-y-5">
       <div className="sticky top-20 z-30 bg-yt-bg md:bg-yt-bg-card md:rounded-xl md:border md:border-yt-border/50 md:shadow-sm">
-        <div className="px-2 md:px-5 py-1 md:pt-5 md:pb-4">
-          <div className="hidden md:flex items-center gap-2 mb-3">
+        <div className="px-3 md:px-5 py-2 md:pt-5 md:pb-4">
+          <div className="hidden md:flex items-center gap-2 mb-4">
             <div className="w-1 h-5 rounded-full bg-yt-accent shrink-0" />
             <h2 className="text-yt-text font-bold text-sm">{t(language, 'tabVideos')}</h2>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="flex-1 min-w-0">
               <VideoFilters
                 allCategories={allCategories}
@@ -138,8 +138,8 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             </button>
           </div>
 
-          <div className="hidden md:block mt-3 relative">
-            <Search size={13} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
+          <div className="hidden md:block mt-4 relative">
+            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
             <input
               type="text"
               value={search}
