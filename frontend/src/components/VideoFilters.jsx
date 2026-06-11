@@ -1,4 +1,4 @@
-import { LayoutGrid, List, ChevronDown, X } from 'lucide-react';
+import { LayoutGrid, List, ChevronDown, X, Radio } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -7,6 +7,7 @@ const SORT_OPTIONS = ['newest', 'views', 'likes', 'dislikes', 'ratio'];
 export default function VideoFilters({
   allCategories, categoryFilter, setCategoryFilter,
   sortBy, setSortBy, listMode, setListMode,
+  liveFilter, setLiveFilter,
 }) {
   const { language } = useTheme();
 
@@ -50,7 +51,20 @@ export default function VideoFilters({
           <ChevronDown size={14} className="absolute end-2 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
         </div>
 
-        <div className="ms-auto flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
+        <button
+          onClick={() => setLiveFilter(!liveFilter)}
+          className={`p-1.5 rounded-lg transition flex items-center gap-1.5 text-xs font-medium ${
+            liveFilter
+              ? 'bg-red-500/15 text-red-500 border border-red-500/30'
+              : 'text-yt-text-secondary hover:text-yt-text border border-transparent'
+          }`}
+          title="Live"
+        >
+          <Radio size={14} className={liveFilter ? 'animate-pulse' : ''} />
+          <span className="hidden sm:inline">Live</span>
+        </button>
+
+        <div className="flex items-center gap-1 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
           <button
             onClick={() => setListMode(false)}
             className={`p-1.5 rounded-md transition ${

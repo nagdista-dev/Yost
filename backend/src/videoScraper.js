@@ -26,11 +26,13 @@ async function scrapeWatchPage(videoId) {
     const lcMatch = vHtml.match(/"likeCount"\s*:\s*"(\d+)"/);
     const ccMatch = vHtml.match(/"commentCount"\s*:\s*"(\d+)"/);
     const durMatch = vHtml.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
+    const isLiveMatch = vHtml.match(/"isLiveContent"\s*:\s*true/) || vHtml.match(/"isLive"\s*:\s*true/);
     return {
       views: vcMatch ? vcMatch[1] : null,
       likes: lcMatch ? lcMatch[1] : null,
       comments: ccMatch ? ccMatch[1] : null,
       length: durMatch ? durMatch[1] : null,
+      isLive: isLiveMatch ? true : null,
     };
   } catch {
     return {};
@@ -121,6 +123,7 @@ async function scrapeLatestVideo(handle) {
     let comments = rssStats.comments || '';
     let dislikes = '';
     let videoLength = '';
+    let isLive = false;
 
     const needsWatchPage = !rssStats.views || !rssStats.likes || !rssStats.comments;
     if (needsWatchPage) {
@@ -129,6 +132,7 @@ async function scrapeLatestVideo(handle) {
       if (!likes && wp.likes) likes = wp.likes;
       if (!comments && wp.comments) comments = wp.comments;
       if (!videoLength && wp.length) videoLength = wp.length;
+      if (wp.isLive) isLive = true;
     }
 
     dislikes = await fetchDislikes(videoId);
@@ -144,6 +148,7 @@ async function scrapeLatestVideo(handle) {
       length: videoLength,
       published: publishedDate,
       videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+      isLive,
     };
 
     console.log(`[video] found: ${video.title} (${video.videoId}, ${views} views)`);
@@ -229,6 +234,7 @@ async function scrapeChannelVideos(handle) {
         comments: rssStats.comments || '',
         dislikes: '',
         length: '',
+        isLive: false,
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
       });
     }
@@ -254,6 +260,7 @@ async function scrapeChannelVideos(handle) {
       if (!entry.comments && wp.comments) entry.comments = wp.comments;
       if (!entry.length && wp.length) entry.length = wp.length;
       if (!entry.dislikes && dd) entry.dislikes = dd;
+      if (wp.isLive) entry.isLive = true;
     });
   }
 

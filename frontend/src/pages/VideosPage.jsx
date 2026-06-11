@@ -18,6 +18,7 @@ export default function VideosPage({ channels, onChannelClick }) {
     loading, videoList, allCategories, progress,
     categoryFilter, setCategoryFilter,
     sortBy, setSortBy,
+    liveFilter, setLiveFilter,
   } = useVideos(channels);
 
   const handlePlay = useCallback((videoId) => {
@@ -51,6 +52,8 @@ export default function VideosPage({ channels, onChannelClick }) {
         setSortBy={setSortBy}
         listMode={listMode}
         setListMode={setListMode}
+        liveFilter={liveFilter}
+        setLiveFilter={setLiveFilter}
       />
 
       <div className="relative max-w-xs">

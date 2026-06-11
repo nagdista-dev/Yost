@@ -18,6 +18,7 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
   const [sortBy, setSortBy] = useState('newest');
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState(null);
+  const [liveFilter, setLiveFilter] = useState(false);
   const [editing, setEditing] = useState(null);
   const [editName, setEditName] = useState('');
   const [editCategories, setEditCategories] = useState([]);
@@ -64,6 +65,10 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
       list = list.filter(v => (v._channelCategories || []).includes(categoryFilter));
     }
 
+    if (liveFilter) {
+      list = list.filter(v => v.isLive);
+    }
+
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(v => v.title.toLowerCase().includes(q));
@@ -104,7 +109,7 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
       _viewsRank: viewsRankMap[v.videoId] || null,
       _likesRank: likesRankMap[v.videoId] || null,
     }));
-  }, [data, search, sortBy, categoryFilter, channel]);
+  }, [data, search, sortBy, categoryFilter, liveFilter, channel]);
 
   function startEdit() {
     if (!channel) return;
@@ -217,6 +222,8 @@ export default function ChannelPage({ channel, onUpdateChannel, onToggleFavorite
             setSortBy={setSortBy}
             listMode={listMode}
             setListMode={setListMode}
+            liveFilter={liveFilter}
+            setLiveFilter={setLiveFilter}
           />
 
           <div className="flex flex-col gap-3">

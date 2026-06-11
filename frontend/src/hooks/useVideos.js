@@ -7,6 +7,7 @@ export default function useVideos(channels) {
   const [progress, setProgress] = useState({ loaded: 0, total: 0 });
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState('newest');
+  const [liveFilter, setLiveFilter] = useState(false);
 
   const allCategories = [...new Set(channels.flatMap(ch => ch.categories || []).filter(Boolean))].sort();
 
@@ -55,7 +56,11 @@ export default function useVideos(channels) {
   }, [channels]);
 
   const videoList = useMemo(() => {
-    const filtered = Object.values(videos).filter(v => !categoryFilter || (v._channelCategories || []).includes(categoryFilter));
+    const filtered = Object.values(videos).filter(v => {
+      if (categoryFilter && !(v._channelCategories || []).includes(categoryFilter)) return false;
+      if (liveFilter && !v.isLive) return false;
+      return true;
+    });
 
     let sorted;
     switch (sortBy) {
@@ -105,5 +110,6 @@ export default function useVideos(channels) {
     videoList, allCategories,
     categoryFilter, setCategoryFilter,
     sortBy, setSortBy,
+    liveFilter, setLiveFilter,
   };
 }

@@ -13,9 +13,14 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
   const viewsLabel = formatViews(video.views) || '0';
   const likesLabel = formatViews(video.likes) || '0';
   const rank = ranks?.viewsRank;
+  const isLive = video.isLive;
 
   return (
-    <div className="group bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm hover:shadow-xl hover:border-yt-accent/20 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex gap-4 p-3">
+    <div className={`group bg-yt-bg-card rounded-xl border shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex gap-4 p-3 ${
+      isLive
+        ? 'border-red-500/30 hover:border-red-500/50 ring-1 ring-red-500/10'
+        : 'border-yt-border/50 hover:border-yt-accent/20'
+    }`}>
       <div
         className="w-36 sm:w-44 h-20 sm:h-28 shrink-0 rounded-xl overflow-hidden bg-yt-bg-tertiary relative cursor-pointer"
         onClick={() => onPlay(video.videoId)}
@@ -36,13 +41,17 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
             <Play size={18} className="text-white ml-0.5" />
           </div>
         </div>
-        {duration && (
-          <div className="absolute bottom-1 left-1">
+        <div className="absolute bottom-1 left-1 flex items-center gap-1">
+          {isLive ? (
+            <span className="bg-red-500/90 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse">
+              LIVE
+            </span>
+          ) : duration ? (
             <span className="bg-black/80 text-white text-[9px] px-1 py-0.5 rounded font-medium">
               {duration}
             </span>
-          </div>
-        )}
+          ) : null}
+        </div>
 
         <div className="absolute bottom-1 right-1 flex items-center gap-1">
           {rank && rank <= 3 && (
@@ -61,9 +70,18 @@ export default function ListCard({ video, ranks, onPlay, onChannelClick }) {
 
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
         <div>
-          <h3 className="text-yt-text font-semibold text-sm leading-snug line-clamp-1 group-hover:text-yt-accent transition-colors">
-            {video.title || t(language, 'untitled')}
-          </h3>
+          <div className="flex items-center gap-1.5">
+            {isLive && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/15 text-red-500 uppercase tracking-wider animate-pulse shrink-0">
+                LIVE
+              </span>
+            )}
+            <h3 className={`text-yt-text font-semibold text-sm leading-snug line-clamp-1 transition-colors ${
+              isLive ? 'group-hover:text-red-400' : 'group-hover:text-yt-accent'
+            }`}>
+              {video.title || t(language, 'untitled')}
+            </h3>
+          </div>
           <p
             className="text-yt-text-muted text-xs truncate mt-1 cursor-pointer hover:text-yt-accent transition-colors"
             onClick={(e) => { e.stopPropagation(); onChannelClick?.(video._channelHandle); }}
