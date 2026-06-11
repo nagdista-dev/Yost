@@ -103,14 +103,14 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
 
   return (
     <div className="space-y-4 md:space-y-5">
-      <div className="bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm overflow-hidden">
-        <div className="px-4 md:px-5 pt-4 md:pt-5 pb-3 md:pb-4">
-          <div className="flex items-center gap-2 mb-3">
+      <div className="sticky top-20 z-30 bg-yt-bg-card rounded-xl border border-yt-border/50 shadow-sm">
+        <div className="px-3 md:px-5 pt-2.5 md:pt-5 pb-2 md:pb-4">
+          <div className="hidden md:flex items-center gap-2 mb-3">
             <div className="w-1 h-5 rounded-full bg-yt-accent shrink-0" />
-            <h2 className="text-yt-text font-bold text-sm md:text-base">{t(language, 'tabVideos')}</h2>
+            <h2 className="text-yt-text font-bold text-sm">{t(language, 'tabVideos')}</h2>
           </div>
 
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2 md:gap-3">
             <div className="flex-1 min-w-0">
               <VideoFilters
                 allCategories={allCategories}
@@ -131,21 +131,21 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             <button
               onClick={onRefreshAll}
               disabled={loading}
-              className="shrink-0 p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition disabled:opacity-40"
+              className="shrink-0 p-1.5 md:p-2 rounded-lg border border-yt-border/40 text-yt-text-secondary hover:text-yt-text hover:bg-yt-bg-tertiary/50 transition disabled:opacity-40"
               title={t(language, 'refreshVideos')}
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
-          <div className="mt-3 relative">
-            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
+          <div className="mt-2 md:mt-3 relative">
+            <Search size={13} className="absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none text-yt-text-muted" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by video title or channel name..."
-              className="w-full ps-9 pe-8 py-2.5 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/30 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent focus:border-yt-accent/30 transition-all placeholder-yt-text-muted/60"
+              className="w-full ps-9 pe-8 py-2 md:py-2.5 text-xs rounded-lg border border-yt-border/40 bg-yt-bg-tertiary/30 text-yt-text-secondary outline-none focus:ring-2 focus:ring-yt-accent focus:border-yt-accent/30 transition-all placeholder-yt-text-muted/60"
             />
             {search && (
               <button
