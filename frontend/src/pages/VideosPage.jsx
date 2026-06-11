@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Film, X, RefreshCw } from 'lucide-react';
+import { Film, X, RefreshCw, LayoutGrid, List } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 import VideoCard from '../components/VideoCard';
@@ -117,6 +117,26 @@ export default function VideosPage({ channels, onChannelClick, onUpdateChannel, 
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
+            <div className="flex items-center gap-0.5 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40 shrink-0">
+              <button
+                onClick={() => setListMode(false)}
+                className={`p-1 rounded-md transition ${
+                  !listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
+                }`}
+                title={t(language, 'gridView')}
+              >
+                <LayoutGrid size={12} />
+              </button>
+              <button
+                onClick={() => setListMode(true)}
+                className={`p-1 rounded-md transition ${
+                  listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
+                }`}
+                title={t(language, 'listView')}
+              >
+                <List size={12} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

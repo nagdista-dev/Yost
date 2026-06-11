@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Trash2, Edit2, X, ExternalLink } from 'lucide-react';
+import { Search, Heart, Trash2, Edit2, X, ExternalLink, RotateCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../api';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -84,6 +85,14 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
     setEditing(null);
   }
 
+  async function populateEditName() {
+    if (!editing) return;
+    try {
+      const { data } = await api.get('/api/resolve-channel', { params: { channelHandle: editing.handle } });
+      if (data.name) setEditName(data.name);
+    } catch {}
+  }
+
   function handleConfirmDelete(ch) {
     onRemoveChannel(ch);
     setConfirmDelete(null);
@@ -99,18 +108,18 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
   return (
     <div className="space-y-6">
       <div className="bg-yt-bg-card rounded-xl p-4 md:p-6 border border-yt-border">
-        <div className="relative mb-4 md:mb-5">
-          <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={t(language, 'searchChannels')}
-            className={`w-full bg-yt-input text-yt-text rounded-lg py-2 md:py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'}`}
-          />
-        </div>
+        <div className="flex flex-col md:flex-row gap-3 md:items-center">
+          <div className="relative flex-1">
+            <Search size={16} className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-yt-text-muted`} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={t(language, 'searchChannels')}
+              className={`w-full bg-yt-input text-yt-text rounded-lg py-2 md:py-2.5 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted ${language === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'}`}
+            />
+          </div>
 
-        {categories.length > 0 && (
-          <div className="mb-4 md:mb-5">
+          {categories.length > 0 && (
             <select
               value={categoryFilter || ''}
               onChange={e => setCategoryFilter(e.target.value || null)}
@@ -123,8 +132,8 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                 </option>
               ))}
             </select>
-          </div>
-        )}
+          )}
+        </div>
 
         {channels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-yt-text-muted">
@@ -218,7 +227,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
       </div>
 
       {confirmDelete && (
-        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -246,7 +255,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
       )}
 
       {confirmOpen && (
-        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmOpen(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setConfirmOpen(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -277,7 +286,7 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
       )}
 
       {editing && (
-        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
+        <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setEditing(null)}>
           <div
             className="bg-yt-bg-card rounded-xl p-6 border border-yt-border w-full max-w-sm mx-4 shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -297,14 +306,24 @@ export default function ChannelsPage({ channels, onRemoveChannel, onUpdateChanne
                 <label className="text-yt-text-secondary text-xs font-medium mb-1.5 block">
                   {t(language, 'channelName')}
                 </label>
-                <input
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
-                  placeholder={t(language, 'channelName')}
-                  className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
+                    placeholder={t(language, 'channelName')}
+                    className="w-full bg-yt-input text-yt-text rounded-lg px-3 py-2 pe-10 text-sm outline-none focus:ring-2 focus:ring-yt-accent placeholder-yt-text-muted"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={populateEditName}
+                    className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-yt-text-muted hover:text-yt-accent transition"
+                    title={t(language, 'populateName')}
+                  >
+                    <RotateCw size={16} />
+                  </button>
+                </div>
               </div>
 
               <div>

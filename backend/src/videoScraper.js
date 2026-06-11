@@ -156,7 +156,6 @@ async function scrapeLatestVideo(handle) {
     if (!views && wp.views) views = wp.views;
     if (!likes && wp.likes) likes = wp.likes;
     if (!comments && wp.comments) comments = wp.comments;
-    if (!videoLength && wp.length) videoLength = wp.length;
     if (wp.isLive) isLive = true;
 
     const ryd = await fetchDislikes(videoId);
@@ -285,7 +284,6 @@ async function scrapeChannelVideos(handle) {
       if (!entry.likes && wp.likes) entry.likes = wp.likes;
       if (!entry.likes && dd.likes) entry.likes = dd.likes;
       if (!entry.comments && wp.comments) entry.comments = wp.comments;
-      if (!entry.length && wp.length) entry.length = wp.length;
       if (!entry.dislikes && dd.dislikes) entry.dislikes = dd.dislikes;
       if (wp.isLive) entry.isLive = true;
     });

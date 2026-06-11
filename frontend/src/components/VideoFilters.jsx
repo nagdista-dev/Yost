@@ -1,4 +1,4 @@
-import { LayoutGrid, List, ChevronDown, Radio } from 'lucide-react';
+import { ChevronDown, Radio } from 'lucide-react';
 import { useTheme } from '../context/useTheme';
 import { t } from '../i18n';
 
@@ -64,29 +64,6 @@ export default function VideoFilters({
         <Radio size={11} className={liveFilter ? 'animate-pulse' : ''} />
         <span className="hidden md:inline">Live</span>
       </button>
-
-      <div className="w-px h-4 bg-yt-border/20 shrink-0 hidden md:block" />
-
-      <div className="flex items-center gap-0.5 bg-yt-bg-tertiary/50 rounded-lg p-0.5 border border-yt-border/40">
-        <button
-          onClick={() => setListMode(false)}
-          className={`p-1 rounded-md transition ${
-            !listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
-          }`}
-          title={t(language, 'gridView')}
-        >
-          <LayoutGrid size={12} />
-        </button>
-        <button
-          onClick={() => setListMode(true)}
-          className={`p-1 rounded-md transition ${
-            listMode ? 'bg-yt-accent text-white shadow-sm' : 'text-yt-text-secondary hover:text-yt-text'
-          }`}
-          title={t(language, 'listView')}
-        >
-          <List size={12} />
-        </button>
-      </div>
     </div>
   );
 }
